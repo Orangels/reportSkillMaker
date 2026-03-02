@@ -19,9 +19,41 @@
 
 ### 执行模式
 
-本项目支持两种执行模式：
+本项目支持三种执行模式：
 
-#### 模式一：Agent Team（多Agent协作）
+#### 模式一：Subagent 调用方式（推荐）⭐
+主 Agent 通过 Agent 工具调用专门的 subagent 完成任务。
+
+**架构**：
+```
+主 Agent (Team Lead)
+├─ 调用 template-analyst subagent
+├─ 调用 data-expert subagent
+└─ 调用 writer subagent
+```
+
+**Subagent 定义文件**：
+- `.claude/agents/template-analyst.md` - 模板分析专家
+- `.claude/agents/data-expert.md` - 数据提取专家
+- `.claude/agents/writer.md` - 文档仿写专家
+
+**执行指导**：
+- [Team Lead 指导文档](./agent_guides/team_lead.md) ← 主 Agent 执行指导
+
+**调用方式**：
+```
+使用 Agent 工具：
+- subagent_type: "template-analyst"
+- prompt: "请分析模板文件 template.docx，生成模板分析文件"
+```
+
+**优势**：
+- ✅ 职责清晰，易于维护
+- ✅ 可以单独测试每个 subagent
+- ✅ 接近最终的 Skill 封装目标
+- ✅ 复用性强，可在不同场景下使用
+
+#### 模式二：Agent Team（多Agent协作）
 采用 4 个 Agent 协作完成报告生成任务：
 1. **Team Lead** - 主协调者
 2. **Template Analyst** - 模板分析专家
@@ -34,7 +66,7 @@
 - [Data Expert 指导文档](./agent_guides/data_expert.md)
 - [Writer 指导文档](./agent_guides/writer.md)
 
-#### 模式二：单Agent执行
+#### 模式三：单Agent执行
 由单个Agent依次扮演不同角色完成任务。
 
 **⚠️ 重要：单Agent执行时必须遵守动态加载规范！**
@@ -49,6 +81,20 @@
 
 ### 工作流程
 
+#### Subagent 调用方式流程（推荐）
+```
+1. 用户上传 template.docx 和 Excel 文件
+2. 主 Agent 询问目标月份
+3. 主 Agent 调用 template-analyst subagent
+   → 生成 middle_file/analysis_template.md
+4. 主 Agent 调用 data-expert subagent
+   → 生成 middle_file/extracted_data.json
+5. 主 Agent 调用 writer subagent
+   → 生成 output/output_[月份]统计报告.docx
+6. 主 Agent 验证质量
+```
+
+#### Agent Team 协作流程
 ```
 1. 用户上传 template.docx 和 Excel 文件
 2. Team Lead 询问目标月份
@@ -65,11 +111,17 @@
 reportSkillMaker/
 ├── CLAUDE.md                    # 项目总体说明（本文件）
 ├── task.md                      # 详细任务需求
+├── .claude/
+│   └── agents/                  # Subagent 定义目录
+│       ├── template-analyst.md  # Template Analyst subagent
+│       ├── data-expert.md       # Data Expert subagent
+│       └── writer.md            # Writer subagent
 ├── agent_guides/                # Agent 指导文档目录
 │   ├── team_lead.md             # Team Lead 详细指导
 │   ├── template_analyst.md      # Template Analyst 详细指导
 │   ├── data_expert.md           # Data Expert 详细指导
-│   └── writer.md                # Writer 详细指导
+│   ├── writer.md                # Writer 详细指导
+│   └── single_agent_execution.md # 单Agent执行指导
 ├── template.docx                # 报告模板（用户上传）
 ├── *.xlsx                       # 数据文件（用户上传）
 ├── middle_file/                 # 中间产出文件
@@ -140,12 +192,16 @@ reportSkillMaker/
 ## 注意事项
 
 1. **执行纪律**：每个 Agent 必须严格遵守其指导文档中的执行步骤
-2. **中间结果传递**：Team Lead 必须显式传递分析结果给 Writer
-3. **文件保存规范**：
+2. **Subagent 调用**（推荐模式）：
+   - 使用 Agent 工具调用 subagent
+   - 在 prompt 中显式传递文件路径和参数
+   - 等待 subagent 完成后检查输出文件
+3. **中间结果传递**：Team Lead 必须显式传递分析结果给 Writer
+4. **文件保存规范**：
    - 中间文件保存在 `./middle_file/` 目录
    - 最终报告保存在 `./output/` 目录
-4. **月份确认**：每次执行前必须先询问用户目标月份
-5. **Python 代码执行规范**：
+5. **月份确认**：每次执行前必须先询问用户目标月份
+6. **Python 代码执行规范**：
    - 禁止直接在命令行执行 Python 代码
    - 必须先将 Python 代码写入 `.py` 文件
    - 然后执行该 `.py` 文件
