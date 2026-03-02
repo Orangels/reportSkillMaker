@@ -84,25 +84,27 @@
 #### Subagent 调用方式流程（推荐）
 ```
 1. 用户上传 template.docx 和 Excel 文件
-2. 主 Agent 询问目标月份
-3. 主 Agent 调用 template-analyst subagent
-   → 生成 middle_file/analysis_template.md
-4. 主 Agent 调用 data-expert subagent
-   → 生成 middle_file/extracted_data.json
-5. 主 Agent 调用 writer subagent
+2. Team Lead 询问目标月份
+3. Team Lead 创建会话目录 middle_file/[时间戳]_session/
+4. Team Lead 调用 template-analyst subagent
+   → 生成 middle_file/[时间戳]_session/analysis_template.md
+5. Team Lead 调用 data-expert subagent
+   → 生成 middle_file/[时间戳]_session/extracted_data.json
+6. Team Lead 调用 writer subagent
    → 生成 output/output_[月份]统计报告.docx
-6. 主 Agent 验证质量
+7. Team Lead 验证质量
 ```
 
 #### Agent Team 协作流程
 ```
 1. 用户上传 template.docx 和 Excel 文件
 2. Team Lead 询问目标月份
-3. Template Analyst 深入分析模板统计逻辑 → middle_file/analysis_template.md
-4. Data Expert 按清单提取多维度数据 → middle_file/extracted_data.json
-5. Team Lead 收集结果 → 显式传递给 Writer
-6. Writer 按格式规范智能仿写 → output/output_[月份]统计报告.docx
-7. Team Lead 验证质量
+3. Team Lead 创建会话目录 middle_file/[时间戳]_session/
+4. Template Analyst 深入分析模板统计逻辑 → middle_file/[时间戳]_session/analysis_template.md
+5. Data Expert 按清单提取多维度数据 → middle_file/[时间戳]_session/extracted_data.json
+6. Team Lead 收集结果 → 显式传递给 Writer
+7. Writer 按格式规范智能仿写 → output/output_[月份]统计报告.docx
+8. Team Lead 验证质量
 ```
 
 ### 文件组织
@@ -124,10 +126,16 @@ reportSkillMaker/
 │   └── single_agent_execution.md # 单Agent执行指导
 ├── template.docx                # 报告模板（用户上传）
 ├── *.xlsx                       # 数据文件（用户上传）
-├── middle_file/                 # 中间产出文件
-│   ├── analysis_template.md     # 模板分析结果
-│   ├── extracted_data.json      # 数据提取结果
-│   └── *.py                     # Python 脚本文件
+├── middle_file/                 # 中间产出文件（按会话组织）
+│   ├── 1234567890123_session/   # 第一次执行的会话目录
+│   │   ├── analysis_template.md # 模板分析结果
+│   │   ├── extracted_data.json  # 数据提取结果
+│   │   └── *.py                 # Python 脚本文件
+│   ├── 1234567890456_session/   # 第二次执行的会话目录
+│   │   ├── analysis_template.md
+│   │   ├── extracted_data.json
+│   │   └── *.py
+│   └── ...
 └── output/                      # 最终报告
     └── output_[月份]统计报告.docx  # 最终生成的报告
 ```
@@ -198,14 +206,18 @@ reportSkillMaker/
    - 等待 subagent 完成后检查输出文件
 3. **中间结果传递**：Team Lead 必须显式传递分析结果给 Writer
 4. **文件保存规范**：
-   - 中间文件保存在 `./middle_file/` 目录
+   - Team Lead 创建会话目录：`./middle_file/[时间戳]_session/`
+   - 中间文件保存在会话目录中（便于追踪和复现）
+   - 调用 skill（docx、xlsx）产生的中间文件和文件夹也保存在会话目录
+   - 脚本生成的所有文件和文件夹也保存在会话目录
    - 最终报告保存在 `./output/` 目录
+   - 每次执行都有独立的会话目录，不会相互覆盖
 5. **月份确认**：每次执行前必须先询问用户目标月份
 6. **Python 代码执行规范**：
    - 禁止直接在命令行执行 Python 代码
    - 必须先将 Python 代码写入 `.py` 文件
    - 然后执行该 `.py` 文件
-   - Python 脚本文件保存在 `./middle_file/` 目录
+   - Python 脚本文件保存在会话目录 `./middle_file/[时间戳]_session/` 中
 
 ---
 
