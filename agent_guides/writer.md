@@ -126,24 +126,102 @@
 4. 量化要求
 5. 预期目标
 
+## python-docx 编码规范（必读）
+
+### 单位体系（最高优先级）
+
+python-docx 存在两套单位体系，**绝对不能混用**：
+
+| 层面 | 单位 | 示例 |
+|------|------|------|
+| Python API 层 | EMU | `Pt(16)` → 203200, `Twips(560)` → 355600, `Emu(406400)` → 406400 |
+| XML 属性层 | twips / half-points 等原生单位 | `w:line="560"`, `w:sz="32"` |
+
+**核心规则**：
+
+1. **使用 python-docx API 设置属性时** → 用 `Pt()`, `Twips()`, `Emu()` 等函数
+   ```python
+   # ✅ 正确：API 接受 EMU，内部自动处理
+   run.font.size = Pt(16)
+   paragraph_format.first_line_indent = Emu(406400)
+   ```
+
+2. **手动操作 XML 属性时** → 用原始数值，禁止用转换函数
+   ```python
+   # ✅ 正确：w:line 期望 twips，直接写 560
+   spacing.set(qn('w:line'), '560')
+   spacing.set(qn('w:lineRule'), 'exact')
+
+   # ❌ 错误：Twips(560) 返回 355600 EMU，写入 XML 导致行距爆炸
+   spacing.set(qn('w:line'), str(int(Twips(560))))  # 写入 355600，实际 247 英寸/行！
+   ```
+
+3. **选择哪种方式**：能用 API 就用 API，只在 API 不支持时才操作 XML
+
+### 常见 XML 属性的正确单位
+
+| XML 属性 | 单位 | 说明 |
+|----------|------|------|
+| `w:line` (行距) | twips | 560 twips = 28pt |
+| `w:sz` / `w:szCs` (字号) | half-points | 32 = 16pt |
+| `w:ind w:firstLine` (首行缩进) | twips | 640 twips ≈ 2字符 |
+| `w:spacing w:before/after` (段前段后) | twips | - |
+| `w:pgMar` (页边距) | twips | - |
+| `w:pgSz` (页面尺寸) | twips | 11906 x 16838 = A4 |
+
+### 行距设置的正确写法
+
+```python
+# 方式一（推荐）：纯 XML 操作，值为 twips
+def set_line_spacing_exact(paragraph, twips_value):
+    pPr = paragraph._element.get_or_add_pPr()
+    spacing = pPr.find(qn('w:spacing'))
+    if spacing is None:
+        spacing = parse_xml(
+            f'<w:spacing {nsdecls("w")} w:line="{twips_value}" w:lineRule="exact"/>'
+        )
+        pPr.append(spacing)
+    else:
+        spacing.set(qn('w:line'), str(twips_value))
+        spacing.set(qn('w:lineRule'), 'exact')
+
+# 调用：直接传 twips 整数
+set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
+```
+
+### 自查清单
+
+编写 python-docx 代码后，必须检查：
+- [ ] 所有 `spacing.set(qn('w:line'), ...)` 的值是否为 twips 整数（非 EMU）
+- [ ] 没有对 XML 属性使用 `Twips()`, `Pt()`, `Emu()` 等转换函数的返回值
+- [ ] 行距值合理性：公文常用 560 twips (28pt)，不应超过 1000
+
+---
+
 ## 常见错误
 
-### 错误1：跳过阅读模板分析文件
+### 错误1：python-docx 单位混用（严重！会导致文档不可用）
+- **现象**：文档100+页，内容看似为空
+- **原因**：`Twips(560)` 返回 355600 EMU，被直接写入 XML `w:line` 属性，该属性期望 twips 值 560
+- **后果**：每行高度变为 247 英寸，文档膨胀到 100+ 页
+- **解决**：操作 XML 属性时使用原始 twips/half-points 数值，不用 `Twips()`/`Pt()` 等转换函数
+
+### 错误2：跳过阅读模板分析文件
 - **现象**：直接使用通用模板生成
 - **后果**：格式与原模板不一致
 - **解决**：强制执行步骤1，先读文件，找格式规范
 
-### 错误2：使用统一的字体和字号
+### 错误3：使用统一的字体和字号
 - **现象**：全部使用 Arial 24pt
 - **后果**：格式不符合公文规范
 - **解决**：根据格式规范表格，为不同内容类型设置不同字体和字号
 
-### 错误3：只写总量描述
+### 错误4：只写总量描述
 - **现象**：缺少多维度分析
 - **后果**：内容深度不够
 - **解决**：检查数据完整性，利用多维度数据
 
-### 错误4：小结和建议过于简单
+### 错误5：小结和建议过于简单
 - **现象**：小结只有一句话，建议没有量化要求
 - **后果**：不符合模板风格
 - **解决**：遵循模板的结构规范
