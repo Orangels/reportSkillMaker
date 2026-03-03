@@ -19,7 +19,9 @@ tools:
 - `analysis_file`: 模板分析文件路径
 - `data_file`: Excel数据文件路径
 - `target_month`: 目标月份
+- `output_path`: 输出文件的完整路径（由 Team Lead 在 prompt 中指定）
 
 ## 输出
 
-- `middle_file/extracted_data.json`: 提取的数据文件
+- 提取的数据文件：`[会话目录]/extracted_data.json`
+- 必须保存在 Team Lead 提供的会话目录中

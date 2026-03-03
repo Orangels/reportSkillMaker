@@ -17,7 +17,14 @@ tools:
 ## 输入
 
 - `template_path`: 模板文件路径
+- `output_path`: 输出文件的完整路径（由 Team Lead 在 prompt 中指定）
 
 ## 输出
 
-- `middle_file/analysis_template.md`: 模板分析结果文件
+- 模板分析结果文件，保存到 Team Lead 指定的 `output_path`
+- 文件名必须是 `analysis_template.md`
+- 必须保存在 Team Lead 提供的会话目录中
+
+## 重要提醒
+
+**必须严格使用 Team Lead 在 prompt 中指定的输出路径，不要自行决定文件名或路径。**
