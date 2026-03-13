@@ -90,6 +90,7 @@ mkdir -p "./output"
     - 输出文件：[SESSION_DIR]/analysis_template.md
 
     ## 要求
+    - 优先使用 Skill 工具调用 docx skill 读取和解析模板，skill 无法满足的操作再用 python-docx
     - 所有中间文件（包括 skill 产生的文件）保存到会话目录
     - 输出文件必须保存到指定路径
     - 必须严格按照执行指导文档中的步骤操作，不能跳过任何步骤"
@@ -119,6 +120,7 @@ mkdir -p "./output"
     - 输出文件：[SESSION_DIR]/extracted_data.json
 
     ## 要求
+    - 优先使用 Skill 工具调用 xlsx skill 读取和探查数据，skill 无法满足的操作再用 openpyxl/pandas
     - 必须先阅读模板分析文件，找到数据提取清单
     - 必须对照清单逐项提取，不遗漏任何维度
     - 所有中间文件（包括 Python 脚本、skill 产生的文件）保存到会话目录
@@ -150,6 +152,7 @@ mkdir -p "./output"
     - 输出文件：./output/output_[target_month]统计报告.docx
 
     ## 要求
+    - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
     - 必须先阅读模板分析文件的格式规范和内容规范
     - 必须检查数据完整性，数据不足时反馈
     - 中间文件保存到会话目录，最终报告保存到 output/ 目录
