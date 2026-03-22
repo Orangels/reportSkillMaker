@@ -18,8 +18,8 @@ tools:
 
 - `analysis_file`: 模板分析文件路径
 - `data_file`: 提取的数据文件路径
-- `target_month`: 目标月份
+- `report_scope`: 报告限定条件（自然语言描述，可能包含时间范围、组织单位、地区等）
 
 ## 输出
 
-- `output/output_[月份]统计报告.docx`: 最终生成的报告
+- `output/output_[scope_label]统计报告.docx`: 最终生成的报告（scope_label 由 Team Lead 从 report_scope 提取）

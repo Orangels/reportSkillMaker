@@ -18,7 +18,7 @@ tools:
 
 - `analysis_file`: 模板分析文件路径
 - `data_file`: Excel数据文件路径
-- `target_month`: 目标月份
+- `report_scope`: 报告限定条件（自然语言描述，可能包含时间范围、组织单位、地区等）
 - `output_path`: 输出文件的完整路径（由 Team Lead 在 prompt 中指定）
 
 ## 输出

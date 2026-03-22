@@ -256,3 +256,5 @@ cache/
 *.xml
 *.docx
 *.xlsx
+
+middle_file/*

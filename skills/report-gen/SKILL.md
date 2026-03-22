@@ -52,13 +52,13 @@ skills/report-gen/
 |------|------|------|
 | `template_path` | DOCX 模板文件路径 | `./template.docx` |
 | `data_path` | 数据文件路径（Excel等） | `./data.xlsx` |
-| `target_month` | 目标月份 | `2025年8月` |
+| `report_scope` | 报告限定条件（自然语言） | `2025年8月` / `2025年 临高县公安局` / `2025-01-01至2025-06-30` |
 
 **自动发现逻辑**：
 - 如果用户未指定文件路径，扫描当前目录的 `.docx` 和 `.xlsx` 文件
 - 如果只有一个 `.docx` 文件，自动作为模板
 - 如果只有一个 `.xlsx` 文件，自动作为数据源
-- 目标月份必须询问用户确认
+- `report_scope` 必须询问用户确认（可包含时间范围、组织单位、地区等任意限定条件）
 
 ### 步骤2：初始化会话目录
 
@@ -110,12 +110,12 @@ mkdir -p "./output"
     严格按照文档中的执行步骤操作。
 
     ## 任务
-    请根据模板分析文件提取 [target_month] 的数据。
+    请根据模板分析文件提取符合限定条件的数据。
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
     - 数据文件：[data_path]
-    - 目标月份：[target_month]
+    - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
     - 输出文件：[SESSION_DIR]/extracted_data.json
 
@@ -141,15 +141,15 @@ mkdir -p "./output"
     严格按照文档中的执行步骤操作。
 
     ## 任务
-    请根据模板分析和数据文件生成 [target_month] 的统计报告。
+    请根据模板分析和数据文件生成符合限定条件的统计报告。
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
     - 数据文件：[SESSION_DIR]/extracted_data.json
     - 原始模板：[template_path]
-    - 目标月份：[target_month]
+    - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：./output/output_[target_month]统计报告.docx
+    - 输出文件：./output/output_[scope_label]统计报告.docx
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
@@ -159,7 +159,7 @@ mkdir -p "./output"
     - 智能仿写，禁止简单占位符替换"
 ```
 
-**完成后检查**：确认 `output/output_[target_month]统计报告.docx` 已生成。
+**完成后检查**：确认 `output/output_[scope_label]统计报告.docx` 已生成。
 
 ### 步骤6：质量验证
 
@@ -171,10 +171,13 @@ mkdir -p "./output"
 ### 步骤7：交付
 
 告知用户：
-- 最终报告路径：`./output/output_[target_month]统计报告.docx`
+- 最终报告路径：`./output/output_[scope_label]统计报告.docx`
 - 中间文件目录：`[SESSION_DIR]/`
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
+
+**`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
+- 示例：`2025年8月` → `2025年8月`，`2025年8月 临高县公安局` → `2025年8月_临高县公安局`
 
 ## 核心原则
 
