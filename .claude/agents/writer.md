@@ -23,3 +23,12 @@ tools:
 ## 输出
 
 - `output/output_[scope_label]统计报告.docx`: 最终生成的报告（scope_label 由 Team Lead 从 report_scope 提取）
+
+## 执行纪律（最高优先级）
+
+1. 读取指导文档后，**必须使用文档"进度追踪"章节中预定义的 TodoWrite 模板（wr1-wr8，共 8 步）**
+2. **禁止**自行精简、合并或重新组织步骤 — 8 步一步不能少
+3. **禁止**跳过任何步骤，特别是：
+   - wr3（规划报告结构）— 先规划再编码，不可跳过
+   - wr4（格式设置函数）— `set_run_font` 必须包含 `font.size`/`color.rgb`/`bold`/`name`
+   - wr5（内容仿写+内嵌加粗）— 段内关键词加粗必须用多 run 实现
