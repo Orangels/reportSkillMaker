@@ -198,3 +198,50 @@ mkdir -p "./output"
 | 格式与模板不一致 | Writer 未阅读格式规范 | 重新调用 Writer，强调遵循格式规范 |
 | 文档100+页空白 | python-docx 单位混用（EMU vs twips） | 检查 Writer 指导文档的编码规范 |
 | 文字被截断 | 大字号段落设置了固定行距 | 检查 Writer 指导文档的行距裁切规则 |
+
+## 进度追踪（强制执行）
+
+**主流程在开始执行前，必须使用 TodoWrite 工具创建以下进度清单：**
+
+TodoWrite([
+  { id: "step1", content: "【加载：步骤1】参数收集 → 重读本文档'步骤1：参数收集'章节", status: "pending" },
+  { id: "step2", content: "【加载：步骤2】初始化会话目录 → 重读本文档'步骤2：初始化会话目录'章节", status: "pending" },
+  { id: "step3", content: "【加载：步骤3+强化验证规则】模板分析 → 调用 subagent 后重读'强化验证规则：步骤3验证'执行验证", status: "pending" },
+  { id: "step4", content: "【加载：步骤4+强化验证规则】数据提取 → 调用 subagent 后重读'强化验证规则：步骤4验证'执行验证", status: "pending" },
+  { id: "step5", content: "【加载：步骤5+强化验证规则】报告生成 → 调用 subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
+  { id: "step6", content: "【加载：步骤6】质量验证 → 重读本文档'步骤6：质量验证'章节", status: "pending" },
+  { id: "step7", content: "【加载：步骤7】交付 → 重读本文档'步骤7：交付'章节", status: "pending" }
+])
+
+**执行规则：**
+- 每开始一个步骤前，**必须先重新阅读**该步骤【加载】指令中指定的章节
+- 执行完成后，用 TodoWrite 将该步骤标记为 completed
+- 进入下一步前，确认当前步骤已标记 completed
+
+## 强化验证规则（TodoWrite 动态加载）
+
+### 步骤3验证：Template Analyst 产出检查
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md`
+2. 检查文件大小是否合理（应 > 5KB）
+3. 如果文件不存在或为空：
+   - 输出错误信息
+   - 重新调用 Template Analyst subagent（最多重试1次）
+   - 如果重试仍失败，暂停并询问用户
+4. 验证通过后，用 TodoWrite 将 step3 标记为 completed
+
+### 步骤4验证：Data Expert 产出检查
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/extracted_data.json`
+2. 检查文件大小是否合理（应 > 10KB，不应只有几KB的基础数据）
+3. 如果文件不存在或过小：
+   - 输出错误信息，说明 Data Expert 可能未成功提取数据
+   - 重新调用 Data Expert subagent（最多重试1次）
+   - 如果重试仍失败，暂停并询问用户
+4. 验证通过后，用 TodoWrite 将 step4 标记为 completed
+
+### 步骤5验证：Writer 产出检查
+1. 检查文件是否存在：`ls -la ./output/output_[scope_label]统计报告.docx`
+2. 如果文件不存在：
+   - 输出错误信息
+   - 重新调用 Writer subagent（最多重试1次）
+   - 如果重试仍失败，暂停并询问用户
+3. 验证通过后，用 TodoWrite 将 step5 标记为 completed
