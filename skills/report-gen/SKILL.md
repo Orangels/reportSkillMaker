@@ -1,6 +1,6 @@
 ---
 name: report-gen
-description: 根据 DOCX 模板和数据文件智能生成报告（仿写，非占位符替换）。当用户要求生成、写、出、做任何类型的报告时触发，包括统计报告、分析报告、月报、年报等。
+description: 根据 DOCX 模板和数据文件智能生成报告。触发词：生成报告、写报告、出报告、做报告、仿写报告、生成xx报告。收到报告生成请求时必须直接调用本 skill，禁止先读取文件或做其他操作。
 argument-hint: "[template.docx] [data.xlsx]"
 ---
 
