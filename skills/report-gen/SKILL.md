@@ -6,12 +6,12 @@ argument-hint: "[template.docx] [data.xlsx]"
 
 # 报告智能生成 Skill
 
-根据任意 DOCX 模板和 Excel/数据文件，通过模板分析→数据提取→智能仿写三阶段流程，生成高质量统计报告。
+根据任意 DOCX 模板和 Excel/数据文件，通过模板分析→数据提取→智能仿写三阶段流程，生成高质量报告。
 
 ## 触发条件
 
 - 用户提到"生成报告"、"写报告"、"出报告"、"做报告"、"仿写报告"、"report-gen"
-- 用户说"生成xxx报告"（如"生成临高县公安局2025年6月份的报告"）
+- 用户说"生成xxx报告"（如"生成XX部门2025年6月份的报告"）
 - 用户提供了 DOCX 模板和数据文件，要求生成报告
 - 用户提到报告模板/数据并要求产出报告文档
 - 泛指：任何涉及"根据模板+数据→生成报告"的请求
@@ -55,7 +55,7 @@ skills/report-gen/
 |------|------|------|
 | `template_path` | DOCX 模板文件路径 | `./template.docx` |
 | `data_path` | 数据文件路径（Excel等） | `./data.xlsx` |
-| `report_scope` | 报告限定条件（自然语言） | `2025年8月` / `2025年 临高县公安局` / `2025-01-01至2025-06-30` |
+| `report_scope` | 报告限定条件（自然语言） | `2025年8月` / `2025年 XX部门` / `2025-01-01至2025-06-30` |
 
 **自动发现逻辑**：
 - 如果用户未指定文件路径，扫描当前目录的 `.docx` 和 `.xlsx` 文件
@@ -66,12 +66,17 @@ skills/report-gen/
 ### 步骤2：初始化会话目录
 
 ```bash
-SESSION_DIR="./middle_file/$(date +%s%3N)_session"
+PROJECT_ROOT="$(pwd)"
+SESSION_DIR="$PROJECT_ROOT/middle_file/$(date +%s%3N)_session"
+OUTPUT_DIR="$PROJECT_ROOT/output"
 mkdir -p "$SESSION_DIR"
-mkdir -p "./output"
+mkdir -p "$OUTPUT_DIR"
 ```
 
-记录 `SESSION_DIR` 路径，后续传递给各 subagent。
+**路径规范（必须遵守）**：
+- 将 `template_path` 和 `data_path` 也转为绝对路径（如 `$PROJECT_ROOT/template.docx`）
+- 后续传递给所有 subagent 的路径**必须是绝对路径**，禁止使用 `./` 相对路径
+- 记录以下变量供后续使用：`PROJECT_ROOT`、`SESSION_DIR`、`OUTPUT_DIR`、`template_path`（绝对）、`data_path`（绝对）
 
 ### 步骤3：调用 Template Analyst Subagent
 
@@ -96,6 +101,7 @@ mkdir -p "./output"
     - 优先使用 Skill 工具调用 docx skill 读取和解析模板，skill 无法满足的操作再用 python-docx
     - 所有中间文件（包括 skill 产生的文件）保存到会话目录
     - 输出文件必须保存到指定路径
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
     - 必须严格按照执行指导文档中的步骤操作，不能跳过任何步骤
 
     ## 执行纪律（最高优先级）
@@ -136,13 +142,14 @@ mkdir -p "./output"
     - 必须对照清单逐项提取，不遗漏任何维度
     - 所有中间文件（包括 Python 脚本、skill 产生的文件）保存到会话目录
     - 输出文件必须保存到指定路径
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
 
     ## 执行纪律（最高优先级）
     - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（de1-de8，共 8 步）
     - 禁止自行精简、合并或重新组织步骤 — 8 步一步不能少
     - 禁止跳过任何步骤，特别是：
       * de2（渐进式探查）— 必须分 3 轮，禁止一步到位
-      * de5（第二层提取：多维度交叉分析）— 每个重点类别必须独立统计辖区/时段/地点等维度
+      * de5（第二层提取：多维度交叉分析）— 每个重点类别必须按清单维度独立统计
       * de6（第三层提取：特殊分析项）— 清单中的特殊项必须单独提取，不支持时标注'数据源不支持'
       * de7（验证）— 必须对照清单逐项验证，不可跳过"
 ```
@@ -161,7 +168,7 @@ mkdir -p "./output"
     严格按照文档中的执行步骤操作。
 
     ## 任务
-    请根据模板分析和数据文件生成符合限定条件的统计报告。
+    请根据模板分析和数据文件生成符合限定条件的报告。
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
@@ -169,13 +176,14 @@ mkdir -p "./output"
     - 原始模板：[template_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：./output/output_[scope_label]统计报告.docx
+    - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告.docx
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
     - 必须先阅读模板分析文件的格式规范和内容规范
     - 必须检查数据完整性，数据不足时反馈
-    - 中间文件保存到会话目录，最终报告保存到 output/ 目录
+    - 中间文件保存到会话目录，最终报告保存到输出目录
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
     - 智能仿写，禁止简单占位符替换
 
     ## 执行纪律（最高优先级）
@@ -187,7 +195,7 @@ mkdir -p "./output"
       * wr5（内容仿写+内嵌加粗）— 段内关键词加粗必须用多 run 实现"
 ```
 
-**完成后检查**：确认 `output/output_[scope_label]统计报告.docx` 已生成。
+**完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告.docx` 已生成。
 
 ### 步骤6：质量验证
 
@@ -199,13 +207,13 @@ mkdir -p "./output"
 ### 步骤7：交付
 
 告知用户：
-- 最终报告路径：`./output/output_[scope_label]统计报告.docx`
+- 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告.docx`
 - 中间文件目录：`[SESSION_DIR]/`
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
-- 示例：`2025年8月` → `2025年8月`，`2025年8月 临高县公安局` → `2025年8月_临高县公安局`
+- 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
 
 ## 核心原则
 
@@ -264,7 +272,7 @@ TodoWrite([
 2. 检查文件大小是否合理（应 > 10KB，不应只有几KB的基础数据）
 3. **语义验证**（读取 JSON 文件，检查数据层级完整性）：
    - [ ] **第一层**：包含总量数据、分类汇总、环比/同比、占比计算
-   - [ ] **第二层**：重点类别有独立的多维度交叉分析（辖区/时段/地点等子字段）
+   - [ ] **第二层**：重点类别有独立的多维度交叉分析（按清单维度组织子字段）
    - [ ] **第三层**：特殊分析项已提取，或标注"数据源不支持"
    - [ ] 数据结构为层级化组织（非扁平 key-value）
 4. 如果文件不存在、过小、或语义验证不通过：
@@ -274,7 +282,7 @@ TodoWrite([
 5. 验证通过后，用 TodoWrite 将 step4 标记为 completed
 
 ### 步骤5验证：Writer 产出检查
-1. 检查文件是否存在：`ls -la ./output/output_[scope_label]统计报告.docx`
+1. 检查文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告.docx`
 2. 如果文件不存在：
    - 输出错误信息
    - 重新调用 Writer subagent（最多重试1次）
