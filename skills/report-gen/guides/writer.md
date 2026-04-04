@@ -73,9 +73,9 @@
 - ✅ 正确：`paragraph.add_run("共完成")` + `paragraph.add_run("重点任务").bold=True` + `paragraph.add_run("236项")`
 
 ### 步骤6：执行脚本生成报告
-1. 将完整的 Python 脚本保存到会话目录
-2. 执行脚本
-3. 确认报告文件已成功生成
+1. 执行入口脚本（入口脚本会 import 格式模块和内容模块）
+2. 确认报告文件已成功生成
+3. 如果执行报错，检查模块间 import 路径是否正确
 
 ### 步骤7：验证生成结果
 1. 检查字体是否符合规范
@@ -219,7 +219,7 @@ set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
 
 TodoWrite([
   { id: "wr1", content: "【加载：步骤1+格式规范要求】阅读模板分析文件 → 提取格式规范表中字号/颜色/加粗/字体的实际数值，记录内嵌加粗模式", status: "pending" },
-  { id: "wr2", content: "【加载：步骤2+关键原则2】检查数据完整性 → 对照清单验证数据维度是否充足", status: "pending" },
+  { id: "wr2", content: "【加载：步骤2+关键原则2】检查数据完整性 → 对照模板分析的'报告结构框架'和'内容逻辑分析'验证数据是否覆盖各章节所需指标", status: "pending" },
   { id: "wr3", content: "【加载：步骤3】规划报告结构 → 确定章节组织、数据映射、动态章节内容", status: "pending" },
   { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → 分模块写入：格式工具函数文件 + 格式配置文件，每个文件独立 Write，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值", status: "pending" },
   { id: "wr5", content: "【加载：步骤5+关键原则4】编写脚本内容部分 → 按报告结构分模块写入（每个模块文件 ≤150 行），最后编写入口脚本组装，段内关键词加粗用多 run 实现", status: "pending" },
