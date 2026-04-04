@@ -65,6 +65,8 @@ skills/report-gen/
 
 ### 步骤2：初始化会话目录
 
+**⚠️ 必须执行以下命令（不是示例，是必须执行的操作）：**
+
 ```bash
 PROJECT_ROOT="$(pwd)"
 SESSION_DIR="$PROJECT_ROOT/middle_file/$(date +%s%3N)_session"
@@ -72,6 +74,8 @@ OUTPUT_DIR="$PROJECT_ROOT/output"
 mkdir -p "$SESSION_DIR"
 mkdir -p "$OUTPUT_DIR"
 ```
+
+**PROJECT_ROOT 必须是当前工作目录（`pwd`）**，禁止使用文件所在目录、上传目录或其他路径替代。所有中间文件和输出文件都基于 PROJECT_ROOT 组织。
 
 **路径规范（必须遵守）**：
 - 将 `template_path` 和 `data_path` 也转为绝对路径（如 `$PROJECT_ROOT/template.docx`）
