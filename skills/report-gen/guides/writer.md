@@ -227,8 +227,8 @@ TodoWrite([
   { id: "wr1", content: "【加载：步骤1+格式规范要求】阅读模板分析文件 → 提取格式规范表中字号/颜色/加粗/字体的实际数值，记录内嵌加粗模式", status: "pending" },
   { id: "wr2", content: "【加载：步骤2+关键原则2】检查数据完整性 → 对照模板分析的'报告结构框架'和'内容逻辑分析'验证数据是否覆盖各章节所需指标", status: "pending" },
   { id: "wr3", content: "【加载：步骤3】规划报告结构 → 确定章节组织、数据映射、动态章节内容", status: "pending" },
-  { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → 分模块写入：格式工具函数文件 + 格式配置文件，每个文件独立 Write，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值", status: "pending" },
-  { id: "wr5", content: "【加载：步骤5+关键原则4】编写脚本内容部分 → 按报告结构分模块写入（每个模块文件 ≤150 行），最后编写入口脚本组装，段内关键词加粗用多 run 实现", status: "pending" },
+  { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → 分模块写入：格式工具函数文件 + 格式配置文件，每个文件独立 Write，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值 → 执行前先复述本步关键约束", status: "pending" },
+  { id: "wr5", content: "【加载：步骤5+关键原则4】编写脚本内容部分 → 按报告结构分模块写入（每个模块文件 ≤150 行），最后编写入口脚本组装，段内关键词加粗用多 run 实现 → 执行前先复述本步关键约束", status: "pending" },
   { id: "wr6", content: "【加载：步骤6】执行脚本生成报告 → 保存脚本到会话目录后执行", status: "pending" },
   { id: "wr7", content: "【加载：步骤7+常见错误+验证清单】验证结果 → 检查格式(字号/颜色/加粗)、内容(多维度)、常见错误(单位混用/行距裁切)", status: "pending" },
   { id: "wr8", content: "【加载：步骤8】保存文档到指定输出路径", status: "pending" }
@@ -239,3 +239,6 @@ TodoWrite([
 - **wr4 和 wr5 是编写脚本，wr6 是执行脚本，三步禁止合并**
 - 执行完成后，用 TodoWrite 将该步骤标记为 completed
 - 进入下一步前，确认当前步骤已标记 completed
+
+**关键步骤复述要求：**
+标记"执行前先复述本步关键约束"的步骤（wr4/wr5），重新阅读后、开始执行前，必须用 1-2 句话总结本步骤的核心约束。目的：将约束推入工作记忆，防止跳过阅读直接执行。
