@@ -204,7 +204,7 @@ TodoWrite([
   { id: "ta4", content: "【加载：步骤4】内容逻辑分析 → 数据指标、计算公式、统计口径、分析维度", status: "pending" },
   { id: "ta5", content: "【加载：步骤5】格式规范分析（关键！）→ 先解包DOCX XML，从 w:sz/w:color/w:b/w:rFonts 提取实际值，生成格式规范表（字号禁止填'-'、颜色列必填）、分析内嵌加粗模式", status: "pending" },
   { id: "ta6", content: "【加载：步骤6】语言风格分析 → 正式程度、专业术语、句式结构、段落组织模式", status: "pending" },
-  { id: "ta7", content: "【加载：步骤7】生成数据提取清单 → 按层级列出所有数据项，标注类型和关联关系", status: "pending" },
+  { id: "ta7", content: "【加载：步骤7】生成数据提取清单 → 第一层列基础数据项，第二层输出选择规则+维度模板（禁止写死类别名），第三层特殊分析项", status: "pending" },
   { id: "ta8", content: "【加载：步骤8+消费者文件内容分配规则+检查清单】按消费者分开保存为 analysis_for_data_expert.md 和 analysis_for_writer.md，逐项验证检查清单", status: "pending" }
 ])
 
