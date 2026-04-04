@@ -90,12 +90,14 @@ mkdir -p "$OUTPUT_DIR"
     严格按照文档中的执行步骤操作。
 
     ## 任务
-    请分析模板文件 [template_path]，生成模板分析文件。
+    请分析模板文件 [template_path]，生成消费者专属分析文件。
 
     ## 参数
     - 模板文件：[template_path]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：[SESSION_DIR]/analysis_template.md
+    - 输出文件：
+      * [SESSION_DIR]/analysis_for_data_expert.md（Data Expert 专属）
+      * [SESSION_DIR]/analysis_for_writer.md（Writer 专属）
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 读取和解析模板，skill 无法满足的操作再用 python-docx
@@ -113,7 +115,7 @@ mkdir -p "$OUTPUT_DIR"
       * ta6（语言风格分析）— 不可跳过"
 ```
 
-**完成后检查**：确认 `[SESSION_DIR]/analysis_template.md` 已生成且内容非空。
+**完成后检查**：确认 `[SESSION_DIR]/analysis_for_data_expert.md` 和 `[SESSION_DIR]/analysis_for_writer.md` 已生成且内容非空。
 
 ### 步骤4：调用 Data Expert Subagent
 
@@ -130,7 +132,7 @@ mkdir -p "$OUTPUT_DIR"
     请根据模板分析文件提取符合限定条件的数据。
 
     ## 参数
-    - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板分析文件：[SESSION_DIR]/analysis_for_data_expert.md
     - 数据文件：[data_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
@@ -171,7 +173,7 @@ mkdir -p "$OUTPUT_DIR"
     请根据模板分析和数据文件生成符合限定条件的报告。
 
     ## 参数
-    - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板分析文件：[SESSION_DIR]/analysis_for_writer.md
     - 数据文件：[SESSION_DIR]/extracted_data.json
     - 原始模板：[template_path]
     - 报告限定条件：[report_scope]
@@ -209,7 +211,8 @@ mkdir -p "$OUTPUT_DIR"
 告知用户：
 - 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告.docx`
 - 中间文件目录：`[SESSION_DIR]/`
-- 模板分析文件：`[SESSION_DIR]/analysis_template.md`
+- 模板分析文件（DE）：`[SESSION_DIR]/analysis_for_data_expert.md`
+- 模板分析文件（Writer）：`[SESSION_DIR]/analysis_for_writer.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
@@ -254,13 +257,14 @@ TodoWrite([
 ## 强化验证规则（TodoWrite 动态加载）
 
 ### 步骤3验证：Template Analyst 产出检查
-1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md`
-2. 检查文件大小是否合理（应 > 5KB）
-3. **语义验证**（读取文件内容，检查是否包含以下关键章节）：
-   - [ ] 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
-   - [ ] 包含"数据/信息提取清单"章节（Data Expert 的工作依据）
-   - [ ] 包含"内嵌加粗模式"或相关段内加粗分析（如模板存在此模式）
-   - [ ] 包含"表达方式"或"语言风格"相关章节
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_for_data_expert.md [SESSION_DIR]/analysis_for_writer.md`
+2. 检查文件大小是否合理（`analysis_for_writer.md` 应 > 3KB，`analysis_for_data_expert.md` 应 > 1KB）
+3. **语义验证**（分别读取两个文件，检查内容分配是否正确）：
+   - [ ] `analysis_for_writer.md` 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
+   - [ ] `analysis_for_data_expert.md` 包含"数据/信息提取清单"章节（Data Expert 的工作依据）
+   - [ ] `analysis_for_writer.md` 包含"内嵌加粗模式"或相关段内加粗分析（如模板存在此模式）
+   - [ ] `analysis_for_writer.md` 包含"表达方式"或"语言风格"相关章节
+   - [ ] `analysis_for_data_expert.md` 包含"数据指标体系"或"数据验证规则"相关内容
 4. 如果文件不存在、过小、或语义验证不通过：
    - 输出错误信息，**指明缺失的具体章节**
    - 重新调用 Template Analyst subagent（最多重试1次）
