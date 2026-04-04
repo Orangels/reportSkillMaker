@@ -112,7 +112,8 @@ mkdir -p "$OUTPUT_DIR"
     - 禁止跳过任何步骤，特别是：
       * ta2（识别文档类型）— 不可跳过
       * ta5（格式规范分析）— 必须从 DOCX XML 提取字号(w:sz)、颜色(w:color)、加粗(w:b)的实际值
-      * ta6（语言风格分析）— 不可跳过"
+      * ta6（语言风格分析）— 不可跳过
+      * ta8（保存）— 必须按消费者分开输出 analysis_for_data_expert.md 和 analysis_for_writer.md，禁止输出单一完整文件"
 ```
 
 **完成后检查**：确认 `[SESSION_DIR]/analysis_for_data_expert.md` 和 `[SESSION_DIR]/analysis_for_writer.md` 已生成且内容非空。
