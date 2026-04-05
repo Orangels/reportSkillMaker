@@ -199,7 +199,7 @@ mkdir -p "$OUTPUT_DIR"
     - 原始模板：[template_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告.docx
+    - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告_$(date +%s).docx
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
@@ -218,7 +218,7 @@ mkdir -p "$OUTPUT_DIR"
       * wr5（内容仿写+内嵌加粗）— 段内关键词加粗必须用多 run 实现"
 ```
 
-**完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告.docx` 已生成。
+**完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_$(date +%s).docx` 已生成。
 
 ### 步骤6：质量验证
 
@@ -231,13 +231,14 @@ mkdir -p "$OUTPUT_DIR"
 ### 步骤7：交付
 
 告知用户：
-- 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告.docx`
+- 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告_$(date +%s).docx`
 - 中间文件目录：`[SESSION_DIR]/`
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
+- 文件名末尾附加 `_$(date +%s)` 秒级时间戳，避免重复覆盖
 
 ## 核心原则
 
@@ -309,7 +310,7 @@ TodoWrite([
 5. 验证通过后，用 TodoWrite 将 step4 标记为 completed
 
 ### 步骤5验证：Writer 产出检查
-1. 检查文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告.docx`
+1. 检查文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
 2. 如果文件不存在：
    - 输出错误信息
    - 重新调用 Writer subagent（最多重试1次）
