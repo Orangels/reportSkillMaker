@@ -224,16 +224,13 @@ TodoWrite([
   { id: "ta2", content: "【加载：步骤2】识别文档类型（统计报告/分析报告/总结报告/建议报告/混合型）", status: "pending" },
   { id: "ta3", content: "【加载：步骤3】结构分析 → 区分固定结构 vs 可变内容 vs 动态元素", status: "pending" },
   { id: "ta4", content: "【加载：步骤4】内容逻辑分析 → 通用统计指标、计算公式、统计口径、分析维度", status: "pending" },
-  { id: "ta5", content: "【加载：步骤5】格式规范分析（关键！）→ 先解包DOCX XML，从 w:sz/w:color/w:b/w:rFonts 提取实际值，生成格式规范表（字号禁止填'-'、颜色列必填）、分析内嵌加粗模式 → 执行前先复述本步关键约束", status: "pending" },
+  { id: "ta5", content: "【加载：步骤5】格式规范分析（关键！）→ 先解包DOCX XML，从 w:sz/w:color/w:b/w:rFonts 提取实际值，生成格式规范表（字号禁止填'-'、颜色列必填）、分析内嵌加粗模式", status: "pending" },
   { id: "ta6", content: "【加载：步骤6】语言风格分析 → 正式程度、专业术语、句式结构、段落组织模式", status: "pending" },
-  { id: "ta7", content: "【加载：步骤7】生成数据提取清单 → 第一层列基础数据项，第二层输出选择规则+维度模板（禁止写死类别名），第三层特殊分析项 → 执行前先复述本步关键约束", status: "pending" },
-  { id: "ta8", content: "【加载：步骤8+消费者文件内容分配规则+检查清单】按消费者分开保存为 analysis_for_data_expert.md 和 analysis_for_writer.md，逐项验证检查清单 → 执行前先复述本步关键约束", status: "pending" }
+  { id: "ta7", content: "【加载：步骤7】生成数据提取清单 → 第一层列基础数据项，第二层输出选择规则+维度模板（禁止写死类别名），第三层特殊分析项", status: "pending" },
+  { id: "ta8", content: "【加载：步骤8+消费者文件内容分配规则+检查清单】按消费者分开保存为 analysis_for_data_expert.md 和 analysis_for_writer.md，逐项验证检查清单", status: "pending" }
 ])
 
 **执行规则：**
 - 每开始一个步骤前，**必须先重新阅读**该步骤【加载】指令中指定的章节
 - 执行完成后，用 TodoWrite 将该步骤标记为 completed
 - 进入下一步前，确认当前步骤已标记 completed
-
-**关键步骤复述要求：**
-标记"执行前先复述本步关键约束"的步骤（ta5/ta7/ta8），重新阅读后、开始执行前，必须用 1-2 句话总结本步骤的核心约束。目的：将约束推入工作记忆，防止跳过阅读直接执行。
