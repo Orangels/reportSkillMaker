@@ -181,6 +181,17 @@ mkdir -p "$OUTPUT_DIR"
 
 ### 步骤5：调用 Writer Subagent
 
+**⚠️ 调用 Writer 前，必须先生成时间戳和 scope_label：**
+
+**`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
+- 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
+
+```bash
+REPORT_TS=$(date +%s)
+# 输出文件路径：[OUTPUT_DIR]/output_[scope_label]报告_${REPORT_TS}.docx
+```
+将完整的绝对路径（含 scope_label 和时间戳）传递给 Writer 的 `输出文件` 参数。
+
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
@@ -244,8 +255,7 @@ mkdir -p "$OUTPUT_DIR"
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
-- 文件名末尾附加 `_<秒级时间戳>` 避免重复覆盖
-- **Team Lead 在调用 Writer 前**执行 `REPORT_TS=$(date +%s)` 生成时间戳，将完整文件名（含时间戳）作为绝对路径传递给 Writer
+- 文件名末尾附加 `_<秒级时间戳>` 避免重复覆盖（scope_label 和时间戳均在步骤5调用 Writer 前生成）
 
 ## 核心原则
 
