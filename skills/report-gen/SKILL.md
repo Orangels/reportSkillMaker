@@ -204,8 +204,9 @@ mkdir -p "$OUTPUT_DIR"
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
     - 必须先阅读模板分析文件的格式规范和内容规范
+    - 必须理解 TA 框架的上层逻辑（组织原则和节点存在原因），结合 DE 实际数据决定报告内容，而非照搬 TA 的固定内容
     - 必须检查数据完整性，数据不足时反馈
-    - 必须全量盘点 DE 输出的每个维度，规划数据消化方案，确保有价值维度都在报告中体现
+    - 必须全量盘点 DE 输出的每个维度，规划数据消化方案，输出 report_plan.md 到会话目录，确保有价值维度都在报告中体现
     - 额外数据优先充实现有结构，让每个分析对象描述更饱满，而非急于新增章节
     - 中间文件保存到会话目录，最终报告保存到输出目录
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
@@ -215,11 +216,11 @@ mkdir -p "$OUTPUT_DIR"
     - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr1-wr8，共 8 步）
     - 禁止自行精简、合并或重新组织步骤 — 8 步一步不能少
     - 禁止跳过任何步骤，特别是：
-      * wr2（盘点数据资产）— 全量遍历 DE 维度，不可跳过
-      * wr3（规划报告结构 + 数据消化方案）— 为每个 DE 维度确定消化去向，先规划再编码
+      * wr2（盘点数据资产）— 全量遍历 DE 维度，理解 TA 框架的上层逻辑而非照搬固定内容，不可跳过
+      * wr3（规划报告结构 + 数据消化方案）— 理解 TA 框架逻辑后匹配实际数据，为每个 DE 维度确定消化去向，输出 report_plan.md 到会话目录，先规划再编码
       * wr4（格式设置函数）— set_run_font 必须包含 font.size/color.rgb/bold/name
-      * wr5（内容仿写）— 按消化方案逐维度落实，段内关键词加粗必须用多 run 实现
-      * wr7（验证）— 必须重新读 DE JSON 逐维度检查数据利用率"
+      * wr5（内容仿写）— 按 report_plan.md 的章节大纲逐章节编码，按消化去向表逐维度落实，段内关键词加粗必须用多 run 实现
+      * wr7（验证）— 必须重新读 DE JSON 对照 report_plan.md 逐维度检查数据利用率"
 ```
 
 **完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` 已生成。
@@ -316,9 +317,10 @@ TodoWrite([
 5. 验证通过后，用 TodoWrite 将 step4 标记为 completed
 
 ### 步骤5验证：Writer 产出检查
-1. 检查文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
-2. 如果文件不存在：
-   - 输出错误信息
+1. 检查报告文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
+2. 检查 report_plan.md 是否存在：`ls -la [SESSION_DIR]/report_plan.md`
+3. 如果报告文件或 report_plan.md 不存在：
+   - 输出错误信息，**指明缺失的文件**
    - 重新调用 Writer subagent（最多重试1次）
    - 如果重试仍失败，暂停并询问用户
-3. 验证通过后，用 TodoWrite 将 step5 标记为 completed
+4. 验证通过后，用 TodoWrite 将 step5 标记为 completed
