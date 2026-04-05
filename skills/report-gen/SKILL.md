@@ -283,7 +283,7 @@ TodoWrite([
   { id: "step2", content: "【加载：步骤2】初始化会话目录 → 重读本文档'步骤2：初始化会话目录'章节", status: "pending" },
   { id: "step3", content: "【加载：步骤3+强化验证规则】模板分析 → 调用 subagent 后重读'强化验证规则：步骤3验证'执行验证", status: "pending" },
   { id: "step4", content: "【加载：步骤4+强化验证规则】数据提取 → 调用 subagent 后重读'强化验证规则：步骤4验证'执行验证", status: "pending" },
-  { id: "step5", content: "【加载：步骤5+强化验证规则】报告生成 → 调用 subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
+  { id: "step5", content: "【加载：步骤5+强化验证规则】报告生成 → 先执行 REPORT_TS=$(date +%s) 生成时间戳，构造含时间戳的输出文件绝对路径传给 Writer，调用 subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
   { id: "step6", content: "【加载：步骤6】质量验证 → 重读本文档'步骤6：质量验证'章节", status: "pending" },
   { id: "step7", content: "【加载：步骤7】交付 → 重读本文档'步骤7：交付'章节", status: "pending" }
 ])
