@@ -67,6 +67,13 @@ skills/report-gen/
 
 **⚠️ 必须执行以下命令（不是示例，是必须执行的操作）：**
 
+**🚫 禁止 cd！必须先确认当前目录：**
+```bash
+# 第一步：确认当前目录（禁止在此之前执行任何 cd 命令）
+pwd
+```
+确认 `pwd` 输出的目录即为 PROJECT_ROOT，**然后才能执行后续命令**。禁止自行 cd 到其他目录。
+
 ```bash
 PROJECT_ROOT="$(pwd)"
 SESSION_DIR="$PROJECT_ROOT/middle_file/$(date +%s%3N)_session"
@@ -75,7 +82,11 @@ mkdir -p "$SESSION_DIR"
 mkdir -p "$OUTPUT_DIR"
 ```
 
-**PROJECT_ROOT 必须是当前工作目录（`pwd`）**，禁止使用文件所在目录、上传目录或其他路径替代。所有中间文件和输出文件都基于 PROJECT_ROOT 组织。
+**PROJECT_ROOT 路径约束（最高优先级）**：
+- **禁止在整个 skill 执行过程中使用 `cd` 命令**
+- **必须先单独执行 `pwd` 确认**当前目录是项目根目录
+- PROJECT_ROOT 必须等于当前工作目录（`pwd`），禁止使用 home 目录、上传目录、文件所在目录或其他路径替代
+- 所有中间文件和输出文件都基于 PROJECT_ROOT 组织
 
 **路径规范（必须遵守）**：
 - 将 `template_path` 和 `data_path` 也转为绝对路径（如 `$PROJECT_ROOT/template.docx`）
