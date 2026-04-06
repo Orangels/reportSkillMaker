@@ -222,14 +222,11 @@ mkdir -p "$OUTPUT_DIR"
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是报告规划专家，负责阅读模板分析和数据文件，产出增强版 report_plan.md。
+  prompt: "你是报告规划专家。
 
     ## 执行指导
     请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_planner.md
-    严格按照文档中的执行步骤操作。
-
-    ## 任务
-    请根据模板分析和数据文件，规划报告结构和数据消化方案，输出 report_plan.md。
+    严格按照文档中的执行步骤操作，使用 wr1-wr3 TodoWrite 模板。
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
@@ -239,17 +236,12 @@ mkdir -p "$OUTPUT_DIR"
     - 会话目录：[SESSION_DIR]
     - 输出文件：[SESSION_DIR]/report_plan.md
 
-    ## 要求
-    - 必须按 report_plan.md 输出模板填写 7 个必填模块
-    - 格式速查表每个字段必须是具体数值，禁止'参见 TA'
-    - 消化去向表必须覆盖 DE 全部数据节点
+    ## 关键提醒（指导文档已有详细说明，此处强调最高优先级约束）
+    - report_plan.md 必须填写全部 7 个必填模块，按文档中的输出模板填充
+    - 格式速查表禁止'参见 TA'，每个字段必须是具体数值
+    - 消化去向表必须覆盖 DE 全部数据节点（含不用+理由）
     - 重点分析对象必须规划 ≥3 个 DE 数据维度
-    - 所有中间文件保存到会话目录
-    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
-
-    ## 执行纪律（最高优先级）
-    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr1-wr3，共 3 步）
-    - 禁止自行精简、合并或重新组织步骤 — 3 步一步不能少"
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改"
 ```
 
 **完成后检查**：确认 `[SESSION_DIR]/report_plan.md` 已生成且内容非空。
@@ -272,14 +264,11 @@ REPORT_TS=$(date +%s)
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是报告编码专家，负责根据 report_plan.md 和数据文件编写 Python 脚本生成 DOCX 报告。
+  prompt: "你是报告编码专家。
 
     ## 执行指导
     请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder.md
-    严格按照文档中的执行步骤操作。
-
-    ## 任务
-    请根据 report_plan.md 的规划编写脚本并生成报告。
+    严格按照文档中的执行步骤操作，使用 wr4-wr6 TodoWrite 模板。
 
     ## 参数
     - 报告规划文件：[SESSION_DIR]/report_plan.md
@@ -288,21 +277,14 @@ REPORT_TS=$(date +%s)
     - 会话目录：[SESSION_DIR]
     - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx
 
-    ## 要求
-    - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
+    ## 关键提醒（指导文档已有详细说明，此处强调最高优先级约束）
     - 只读取 report_plan.md 和 extracted_data.json，不读取 analysis_template.md 和 template_content.md
-    - 按 plan 的编码章节清单逐章编码并打钩
-    - 按 plan 的消化去向表逐维度落实
+    - 按 plan 的编码章节清单逐章编码并打钩，防止遗漏
+    - 按 plan 的消化去向表逐维度落实，不遗漏
     - 重点分析对象必须引用 ≥3 个 DE 数据维度
     - 段内关键词加粗用多 run + bold=True，禁止 Markdown ** 标记
-    - 所有 Python 代码必须先写入 .py 文件再执行
-    - 所有中间文件保存到会话目录
-    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
-
-    ## 执行纪律（最高优先级）
-    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr4-wr6，共 3 步）
-    - 禁止自行精简、合并或重新组织步骤 — 3 步一步不能少
-    - 编写脚本（wr4+wr5）和执行脚本（wr6）是独立步骤，禁止合并"
+    - 编写脚本（wr4+wr5）和执行脚本（wr6）是独立步骤，禁止合并
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改"
 ```
 
 **完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` 已生成。
@@ -312,14 +294,11 @@ REPORT_TS=$(date +%s)
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是报告验证专家，负责对照 report_plan.md 验证生成的报告质量。
+  prompt: "你是报告验证专家。
 
     ## 执行指导
     请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_verifier.md
-    严格按照文档中的执行步骤操作。
-
-    ## 任务
-    请验证报告质量，输出 data_usage_check.md 和验证结论。
+    严格按照文档中的执行步骤操作，使用 wr7-wr8 TodoWrite 模板。
 
     ## 参数
     - 报告规划文件：[SESSION_DIR]/report_plan.md
@@ -328,21 +307,12 @@ REPORT_TS=$(date +%s)
     - 会话目录：[SESSION_DIR]
     - 验证输出：[SESSION_DIR]/data_usage_check.md
 
-    ## 要求
-    - 优先使用 Skill 工具调用 docx skill 读取报告，skill 无法满足的操作再用 python-docx
-    - 对照 plan 编码章节清单检查整章缺失
-    - 对照 plan 消化去向表逐维度检查数据利用率
-    - 检查重点分析对象是否引用 ≥3 个 DE 数据维度
-    - 检查格式（字号/颜色/加粗/Markdown泄漏/行距）
+    ## 关键提醒（指导文档已有详细说明，此处强调最高优先级约束）
+    - 对照 plan 的编码章节清单检查整章缺失
+    - 对照 plan 的消化去向表逐维度检查数据利用率
     - 必须输出 data_usage_check.md，不输出则验证不算完成
-    - 输出验证结论：通过/不通过+具体缺陷列表
-    - 所有 Python 代码必须先写入 .py 文件再执行
-    - 所有中间文件保存到会话目录
-    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
-
-    ## 执行纪律（最高优先级）
-    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr7-wr8，共 2 步）
-    - 禁止自行精简、合并或重新组织步骤 — 2 步一步不能少"
+    - 输出验证结论：通过/不通过 + 具体缺陷列表
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改"
 ```
 
 **完成后检查**：
