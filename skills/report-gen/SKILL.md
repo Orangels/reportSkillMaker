@@ -331,7 +331,7 @@ TodoWrite([
 
 ### 步骤3验证：Template Analyst 产出检查
 1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md` 和 `ls -la [SESSION_DIR]/template_content.md`
-2. 检查文件大小是否合理（analysis_template.md 应 > 3KB，template_content.md 应非空）
+2. 检查文件大小是否合理（analysis_template.md 应 > 3KB，template_content.md 行数应 > 10行）
 3. **语义验证**（读取文件，检查内容是否完整）：
    - [ ] 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
    - [ ] 包含"数据/信息提取清单"章节（Data Expert 的工作依据）
