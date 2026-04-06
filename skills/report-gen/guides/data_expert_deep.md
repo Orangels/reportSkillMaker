@@ -143,9 +143,9 @@
 **开始执行前，必须使用以下 TodoWrite 模板（原样复制，禁止精简或合并）：**
 
 TodoWrite([
-  { id: "dd1", content: "【加载：步骤1】阅读模板分析文件和已有 JSON → 列出第三层待提取清单", status: "pending" },
+  { id: "dd1", content: "【加载：步骤1】阅读模板分析文件和已有 JSON → 列出第三层待提取清单；阅读 template_content.md → 记录特殊分析项的上下文和维度需求", status: "pending" },
   { id: "dd2", content: "【加载：步骤2】探查数据源 → 为每个特殊项确定具体筛选条件（必须执行代码）", status: "pending" },
-  { id: "dd3", content: "【加载：步骤3】第三层提取 → 逐项编写 Python 脚本筛选和统计（空壳不算完成）", status: "pending" },
+  { id: "dd3", content: "【加载：步骤3】第三层提取 → 逐项编写 Python 脚本筛选和统计（参考 dd1 从模板正文记录的维度需求，空壳不算完成）", status: "pending" },
   { id: "dd4", content: "【加载：步骤4】主动发现 → 逐列扫描脚本 + 提取结构化数据（禁止纯文字描述）", status: "pending" },
   { id: "dd5", content: "【加载：步骤5】验证 → 空壳检查 + 冲突检查 + 验证报告", status: "pending" },
   { id: "dd6", content: "【加载：步骤6】保存 extracted_data.json 到会话目录", status: "pending" }
