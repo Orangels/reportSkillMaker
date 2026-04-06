@@ -382,8 +382,17 @@ TodoWrite([
 ### 步骤6验证：Writer 产出检查
 1. 检查报告文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
 2. 检查 report_plan.md 是否存在：`ls -la [SESSION_DIR]/report_plan.md`
-3. 如果报告文件或 report_plan.md 不存在：
-   - 输出错误信息，**指明缺失的文件**
+3. 检查 data_usage_check.md 是否存在：`ls -la [SESSION_DIR]/data_usage_check.md`
+4. **report_plan.md 语义验证**（读取文件，检查内容质量）：
+   - [ ] 包含完整的报告章节大纲（到三级标题）
+   - [ ] 包含 DE 数据维度的消化去向表（维度名 → 去向章节 / 不用+理由）
+   - [ ] 每个重点分析对象规划引用 ≥3 个 DE 数据维度
+5. **data_usage_check.md 语义验证**（读取文件，检查验证质量）：
+   - [ ] 包含逐维度验证表（DE数据节点 → 计划去向 → 实际落实位置 → 状态）
+   - [ ] 包含重点分析对象深度验证（引用DE维度数 ≥3）
+   - [ ] 包含未使用维度及理由
+6. 如果报告文件、report_plan.md 或 data_usage_check.md 不存在，或语义验证不通过：
+   - 输出错误信息，**指明缺失的文件或不达标的具体项**
    - 重新调用 Writer subagent（最多重试1次）
    - 如果重试仍失败，暂停并询问用户
-4. 验证通过后，用 TodoWrite 将 step6 标记为 completed
+7. 验证通过后，用 TodoWrite 将 step6 标记为 completed
