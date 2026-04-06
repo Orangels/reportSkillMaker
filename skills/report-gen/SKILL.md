@@ -8,14 +8,6 @@ argument-hint: "[template.docx] [data.xlsx]"
 
 根据任意 DOCX 模板和 Excel/数据文件，通过模板分析→数据提取→智能仿写三阶段流程，生成高质量报告。
 
-## 触发条件
-
-- 用户提到"生成报告"、"写报告"、"出报告"、"做报告"、"仿写报告"、"report-gen"
-- 用户说"生成xxx报告"（如"生成XX部门2025年6月份的报告"）
-- 用户提供了 DOCX 模板和数据文件，要求生成报告
-- 用户提到报告模板/数据并要求产出报告文档
-- 泛指：任何涉及"根据模板+数据→生成报告"的请求
-
 ## 工作流程概览
 
 ```
@@ -43,8 +35,6 @@ skills/report-gen/
     └── writer.md               ← 文档仿写专家指导
 ```
 
-**重要**：下文中 `[SKILL_DIR]` 指本 SKILL.md 文件所在的目录路径。执行时请替换为实际的绝对路径。
-
 ## 执行步骤
 
 ### 步骤1：参数收集
@@ -70,14 +60,9 @@ skills/report-gen/
 
 ### 步骤2：初始化会话目录
 
-**⚠️ 必须执行以下命令（不是示例，是必须执行的操作）：**
+**当前工作目录**：!`pwd`
 
-**🚫 禁止 cd！必须先确认当前目录：**
-```bash
-# 第一步：确认当前目录（禁止在此之前执行任何 cd 命令）
-pwd
-```
-确认 `pwd` 输出的目录即为 PROJECT_ROOT，**然后才能执行后续命令**。禁止自行 cd 到其他目录。
+**🚫 禁止 cd！** 以上路径即为 PROJECT_ROOT，直接执行以下命令：
 
 ```bash
 PROJECT_ROOT="$(pwd)"
@@ -89,8 +74,7 @@ mkdir -p "$OUTPUT_DIR"
 
 **PROJECT_ROOT 路径约束（最高优先级）**：
 - **禁止在整个 skill 执行过程中使用 `cd` 命令**
-- **必须先单独执行 `pwd` 确认**当前目录是项目根目录
-- PROJECT_ROOT 必须等于当前工作目录（`pwd`），禁止使用 home 目录、上传目录、文件所在目录或其他路径替代
+- PROJECT_ROOT 必须等于上方注入的当前工作目录，禁止使用 home 目录、上传目录、文件所在目录或其他路径替代
 - 所有中间文件和输出文件都基于 PROJECT_ROOT 组织
 
 **路径规范（必须遵守）**：
@@ -106,7 +90,7 @@ mkdir -p "$OUTPUT_DIR"
   prompt: "你是模板分析专家，负责分析DOCX模板的统计逻辑、格式规范和写作风格。
 
     ## 执行指导
-    请先阅读执行指导文档：[SKILL_DIR]/guides/template_analyst.md
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/template_analyst.md
     严格按照文档中的执行步骤操作。
 
     ## 任务
@@ -144,7 +128,7 @@ mkdir -p "$OUTPUT_DIR"
   prompt: "你是数据提取和计算专家，负责根据模板分析结果提取完整的多维度数据。
 
     ## 执行指导
-    请先阅读执行指导文档：[SKILL_DIR]/guides/data_expert.md
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/data_expert.md
     严格按照文档中的执行步骤操作。
 
     ## 任务
@@ -198,7 +182,7 @@ REPORT_TS=$(date +%s)
   prompt: "你是文档仿写专家，负责根据模板分析和提取数据智能生成新报告。
 
     ## 执行指导
-    请先阅读执行指导文档：[SKILL_DIR]/guides/writer.md
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer.md
     严格按照文档中的执行步骤操作。
 
     ## 任务
