@@ -11,7 +11,7 @@ argument-hint: "[template.docx] [data.xlsx]"
 ## 工作流程概览
 
 ```
-参数收集 → 初始化 → Template Analyst → Data Expert(第一二层) → 验证 → Data Expert Deep(第三层+主动发现) → 验证 → Writer → 质量验证
+参数收集 → 初始化 → Template Analyst → Data Expert(第一二层) → 验证 → Data Expert Deep(第三层+主动发现) → 验证 → Writer-Planner → 验证plan → Writer-Coder → Writer-Verifier → 质量验证
 ```
 
 ## 执行模式
@@ -33,7 +33,9 @@ skills/report-gen/
     ├── template_analyst.md     ← 模板分析专家指导
     ├── data_expert.md          ← 数据提取专家指导（第一二层）
     ├── data_expert_deep.md     ← 数据深度提取专家指导（第三层+主动发现）
-    └── writer.md               ← 文档仿写专家指导
+    ├── writer_planner.md       ← Writer-Planner：报告规划专家（wr1-wr3）
+    ├── writer_coder.md         ← Writer-Coder：报告编码专家（wr4-wr6）
+    └── writer_verifier.md      ← Writer-Verifier：报告验证专家（wr7-wr8）
 ```
 
 ## 执行步骤
@@ -211,9 +213,52 @@ mkdir -p "$OUTPUT_DIR"
 
 **完成后检查**：确认 `[SESSION_DIR]/extracted_data.json` 已更新，包含第三层和主动发现数据。
 
-### 步骤6：调用 Writer Subagent
+### 步骤6：调用 Writer 三阶段 Subagent（Planner → Coder → Verifier）
 
-**⚠️ 调用 Writer 前，必须先生成时间戳和 scope_label：**
+**⚠️ Writer 已拆分为 3 个独立 Agent，必须按顺序依次调用：**
+
+#### 步骤6a：调用 Writer-Planner Subagent
+
+```
+使用 Agent 工具：
+  subagent_type: "general-purpose"
+  prompt: "你是报告规划专家，负责阅读模板分析和数据文件，产出增强版 report_plan.md。
+
+    ## 执行指导
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_planner.md
+    严格按照文档中的执行步骤操作。
+
+    ## 任务
+    请根据模板分析和数据文件，规划报告结构和数据消化方案，输出 report_plan.md。
+
+    ## 参数
+    - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板正文参考：[SESSION_DIR]/template_content.md
+    - 数据文件：[SESSION_DIR]/extracted_data.json
+    - 报告限定条件：[report_scope]
+    - 会话目录：[SESSION_DIR]
+    - 输出文件：[SESSION_DIR]/report_plan.md
+
+    ## 要求
+    - 必须按 report_plan.md 输出模板填写 7 个必填模块
+    - 格式速查表每个字段必须是具体数值，禁止'参见 TA'
+    - 消化去向表必须覆盖 DE 全部数据节点
+    - 重点分析对象必须规划 ≥3 个 DE 数据维度
+    - 所有中间文件保存到会话目录
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
+
+    ## 执行纪律（最高优先级）
+    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr1-wr3，共 3 步）
+    - 禁止自行精简、合并或重新组织步骤 — 3 步一步不能少"
+```
+
+**完成后检查**：确认 `[SESSION_DIR]/report_plan.md` 已生成且内容非空。
+
+**⚠️ Planner 调用后，Team Lead 必须验证 plan 质量（见强化验证规则：步骤6a验证），验证通过后才能调用 Coder。**
+
+#### 步骤6b：调用 Writer-Coder Subagent
+
+**⚠️ 调用 Coder 前，必须先生成时间戳和 scope_label：**
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
@@ -222,23 +267,22 @@ mkdir -p "$OUTPUT_DIR"
 REPORT_TS=$(date +%s)
 # 输出文件路径：[OUTPUT_DIR]/output_[scope_label]报告_${REPORT_TS}.docx
 ```
-将完整的绝对路径（含 scope_label 和时间戳）传递给 Writer 的 `输出文件` 参数。
+将完整的绝对路径（含 scope_label 和时间戳）传递给 Coder 的 `输出文件` 参数。
 
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是文档仿写专家，负责根据模板分析和提取数据智能生成新报告。
+  prompt: "你是报告编码专家，负责根据 report_plan.md 和数据文件编写 Python 脚本生成 DOCX 报告。
 
     ## 执行指导
-    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer.md
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder.md
     严格按照文档中的执行步骤操作。
 
     ## 任务
-    请根据模板分析和数据文件生成符合限定条件的报告。
+    请根据 report_plan.md 的规划编写脚本并生成报告。
 
     ## 参数
-    - 模板分析文件：[SESSION_DIR]/analysis_template.md
-    - 模板正文参考：[SESSION_DIR]/template_content.md
+    - 报告规划文件：[SESSION_DIR]/report_plan.md
     - 数据文件：[SESSION_DIR]/extracted_data.json
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
@@ -246,27 +290,65 @@ REPORT_TS=$(date +%s)
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
-    - 必须先阅读模板分析文件的格式规范和内容规范
-    - 必须理解 TA 框架的上层逻辑（组织原则和节点存在原因），结合 DE 实际数据决定报告内容，而非照搬 TA 的固定内容
-    - 必须检查数据完整性，数据不足时反馈
-    - 必须全量盘点 DE 输出的每个维度，规划数据消化方案，输出 report_plan.md 到会话目录，确保有价值维度都在报告中体现
-    - 额外数据优先充实现有结构，让每个分析对象描述更饱满，而非急于新增章节
-    - 中间文件保存到会话目录，最终报告保存到输出目录
+    - 只读取 report_plan.md 和 extracted_data.json，不读取 analysis_template.md 和 template_content.md
+    - 按 plan 的编码章节清单逐章编码并打钩
+    - 按 plan 的消化去向表逐维度落实
+    - 重点分析对象必须引用 ≥3 个 DE 数据维度
+    - 段内关键词加粗用多 run + bold=True，禁止 Markdown ** 标记
+    - 所有 Python 代码必须先写入 .py 文件再执行
+    - 所有中间文件保存到会话目录
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
-    - 智能仿写，禁止简单占位符替换
 
     ## 执行纪律（最高优先级）
-    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr1-wr8，共 8 步）
-    - 禁止自行精简、合并或重新组织步骤 — 8 步一步不能少
-    - 禁止跳过任何步骤，特别是：
-      * wr2（盘点数据资产）— 全量遍历 DE 维度，理解 TA 框架的上层逻辑而非照搬固定内容，不可跳过
-      * wr3（规划报告结构 + 数据消化方案）— 理解 TA 框架逻辑后匹配实际数据，为每个 DE 维度确定消化去向，输出 report_plan.md 到会话目录，先规划再编码
-      * wr4（格式设置函数）— set_run_font 必须包含 font.size/color.rgb/bold/name
-      * wr5（内容仿写）— 按 report_plan.md 的章节大纲逐章节编码，按消化去向表逐维度落实，段内关键词加粗必须用多 run 实现
-      * wr7（验证）— 必须重新读 DE JSON 对照 report_plan.md 逐维度检查数据利用率"
+    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr4-wr6，共 3 步）
+    - 禁止自行精简、合并或重新组织步骤 — 3 步一步不能少
+    - 编写脚本（wr4+wr5）和执行脚本（wr6）是独立步骤，禁止合并"
 ```
 
 **完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` 已生成。
+
+#### 步骤6c：调用 Writer-Verifier Subagent
+
+```
+使用 Agent 工具：
+  subagent_type: "general-purpose"
+  prompt: "你是报告验证专家，负责对照 report_plan.md 验证生成的报告质量。
+
+    ## 执行指导
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_verifier.md
+    严格按照文档中的执行步骤操作。
+
+    ## 任务
+    请验证报告质量，输出 data_usage_check.md 和验证结论。
+
+    ## 参数
+    - 报告规划文件：[SESSION_DIR]/report_plan.md
+    - 数据文件：[SESSION_DIR]/extracted_data.json
+    - 报告文件：[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx
+    - 会话目录：[SESSION_DIR]
+    - 验证输出：[SESSION_DIR]/data_usage_check.md
+
+    ## 要求
+    - 优先使用 Skill 工具调用 docx skill 读取报告，skill 无法满足的操作再用 python-docx
+    - 对照 plan 编码章节清单检查整章缺失
+    - 对照 plan 消化去向表逐维度检查数据利用率
+    - 检查重点分析对象是否引用 ≥3 个 DE 数据维度
+    - 检查格式（字号/颜色/加粗/Markdown泄漏/行距）
+    - 必须输出 data_usage_check.md，不输出则验证不算完成
+    - 输出验证结论：通过/不通过+具体缺陷列表
+    - 所有 Python 代码必须先写入 .py 文件再执行
+    - 所有中间文件保存到会话目录
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
+
+    ## 执行纪律（最高优先级）
+    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（wr7-wr8，共 2 步）
+    - 禁止自行精简、合并或重新组织步骤 — 2 步一步不能少"
+```
+
+**完成后检查**：
+1. 确认 `[SESSION_DIR]/data_usage_check.md` 已生成
+2. 读取验证结论，判断通过/不通过
+3. **不通过时**：根据缺陷严重程度决定是否重调 Coder（最多重试1次）
 
 ### 步骤7：质量验证
 
@@ -317,7 +399,9 @@ TodoWrite([
   { id: "step3", content: "【加载：步骤3+强化验证规则】模板分析 → 调用 subagent 后重读'强化验证规则：步骤3验证'执行验证", status: "pending" },
   { id: "step4", content: "【加载：步骤4+强化验证规则】数据提取（第一二层）→ 调用 DE subagent 后重读'强化验证规则：步骤4验证'执行验证", status: "pending" },
   { id: "step5", content: "【加载：步骤5+强化验证规则】数据深度提取（第三层+主动发现）→ 调用 DE-deep subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
-  { id: "step6", content: "【加载：步骤6+强化验证规则】报告生成 → 先执行 REPORT_TS=$(date +%s) 生成时间戳，构造含时间戳的输出文件绝对路径传给 Writer，调用 subagent 后重读'强化验证规则：步骤6验证'执行验证", status: "pending" },
+  { id: "step6a", content: "【加载：步骤6a+强化验证规则】Writer-Planner → 调用 Planner subagent 后重读'强化验证规则：步骤6a验证'验证 plan 质量，通过后才能继续", status: "pending" },
+  { id: "step6b", content: "【加载：步骤6b+强化验证规则】Writer-Coder → 先执行 REPORT_TS=$(date +%s) 生成时间戳，构造含时间戳的输出文件绝对路径传给 Coder，调用 subagent 后重读'强化验证规则：步骤6b验证'执行验证", status: "pending" },
+  { id: "step6c", content: "【加载：步骤6c+强化验证规则】Writer-Verifier → 调用 Verifier subagent 后重读'强化验证规则：步骤6c验证'，读取验证结论决定是否重试", status: "pending" },
   { id: "step7", content: "【加载：步骤7】质量验证 → 重读本文档'步骤7：质量验证'章节", status: "pending" },
   { id: "step8", content: "【加载：步骤8】交付 → 重读本文档'步骤8：交付'章节", status: "pending" }
 ])
@@ -380,20 +464,43 @@ TodoWrite([
    - 如果重试仍失败，暂停并询问用户
 6. 验证通过后，用 TodoWrite 将 step5 标记为 completed
 
-### 步骤6验证：Writer 产出检查
+### 步骤6a验证：Writer-Planner 产出检查
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/report_plan.md`
+2. 检查文件大小是否合理（应 > 2KB）
+3. **语义验证**（读取文件，检查 7 个必填模块完整性）：
+   - [ ] 模块1：格式规范速查表存在，每个字段是具体数值（无"参见 TA"引用）
+   - [ ] 模块2：段内加粗规则存在（有具体规则或标注"无"+判断依据）
+   - [ ] 模块3：编码章节清单存在，覆盖所有章节，每个分析对象独立一行
+   - [ ] 模块4：章节大纲+维度列表存在，含 DE JSON 路径
+   - [ ] 模块5：消化去向汇总表存在，覆盖 DE 全部数据节点（含不用+理由）
+   - [ ] 模块6：段落写法规则存在，为句式模板形式（非模板原文照搬）
+   - [ ] 模块7：分析对象重要程度标注存在，重点对象规划 ≥3 维度
+4. 如果文件不存在、过小、或语义验证不通过：
+   - 输出错误信息，**指明缺失的具体模块**
+   - 重新调用 Writer-Planner subagent（最多重试1次）
+   - 如果重试仍失败，暂停并询问用户
+5. 验证通过后，用 TodoWrite 将 step6a 标记为 completed
+
+### 步骤6b验证：Writer-Coder 产出检查
 1. 检查报告文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
-2. 检查 report_plan.md 是否存在：`ls -la [SESSION_DIR]/report_plan.md`
-3. 检查 data_usage_check.md 是否存在：`ls -la [SESSION_DIR]/data_usage_check.md`
-4. **report_plan.md 语义验证**（读取文件，检查内容质量）：
-   - [ ] 包含完整的报告章节大纲（到三级标题）
-   - [ ] 包含 DE 数据维度的消化去向表（维度名 → 去向章节 / 不用+理由）
-   - [ ] 每个重点分析对象规划引用 ≥3 个 DE 数据维度
-5. **data_usage_check.md 语义验证**（读取文件，检查验证质量）：
+2. 检查文件大小是否合理（应 > 10KB）
+3. 如果文件不存在或过小：
+   - 输出错误信息
+   - 重新调用 Writer-Coder subagent（最多重试1次）
+   - 如果重试仍失败，暂停并询问用户
+4. 验证通过后，用 TodoWrite 将 step6b 标记为 completed
+
+### 步骤6c验证：Writer-Verifier 产出检查
+1. 检查 data_usage_check.md 是否存在：`ls -la [SESSION_DIR]/data_usage_check.md`
+2. **读取验证结论**，判断通过/不通过
+3. **data_usage_check.md 语义验证**（读取文件，检查验证质量）：
    - [ ] 包含逐维度验证表（DE数据节点 → 计划去向 → 实际落实位置 → 状态）
    - [ ] 包含重点分析对象深度验证（引用DE维度数 ≥3）
    - [ ] 包含未使用维度及理由
-6. 如果报告文件、report_plan.md 或 data_usage_check.md 不存在，或语义验证不通过：
-   - 输出错误信息，**指明缺失的文件或不达标的具体项**
-   - 重新调用 Writer subagent（最多重试1次）
-   - 如果重试仍失败，暂停并询问用户
-7. 验证通过后，用 TodoWrite 将 step6 标记为 completed
+4. 如果 data_usage_check.md 不存在或语义验证不通过：
+   - 重新调用 Writer-Verifier subagent（最多重试1次）
+5. **如果验证结论为"不通过"**：
+   - 读取具体缺陷列表
+   - 根据缺陷严重程度决定是否重调 Writer-Coder（最多重试1次），重调后需再次调用 Verifier
+   - 如果重试仍不通过，记录缺陷并继续后续步骤
+6. 验证通过后，用 TodoWrite 将 step6c 标记为 completed
