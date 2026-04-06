@@ -311,7 +311,7 @@ set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
 TodoWrite([
   { id: "wr1", content: "【加载：步骤1+格式规范要求】阅读模板分析文件 → 提取格式规范中字号/颜色/加粗/字体的实际数值，记录段内加粗模式", status: "pending" },
   { id: "wr2", content: "【加载：步骤2+关键原则2+关键原则5】盘点数据资产 + 阅读模板正文 → 全量遍历 DE 维度，理解 TA 框架上层逻辑，检查算术自洽性，阅读 template_content.md 学习段落组织模式和详略比例", status: "pending" },
-  { id: "wr3", content: "【加载：步骤3+关键原则5】规划报告结构 + 数据消化方案 → 理解 TA 框架逻辑后匹配实际数据，为 DE 每个数据节点确定消化去向，规划每个分析对象的多维度叙述，输出 report_plan.md 到会话目录", status: "pending" },
+  { id: "wr3", content: "【加载：步骤3+关键原则5】规划报告结构 + 数据消化方案 → 理解 TA 框架逻辑后匹配实际数据，为 DE 每个数据节点确定消化去向，标注分析对象重要程度（重点/一般，重点对象必须规划≥3个DE维度），输出 report_plan.md 到会话目录", status: "pending" },
   { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → 分模块写入：格式工具函数文件 + 格式配置文件，每个文件独立 Write，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值", status: "pending" },
   { id: "wr5", content: "【加载：步骤5+关键原则4+关键原则5】编写脚本内容部分 → 按 report_plan.md 的章节大纲逐章节编码，按消化去向表逐维度落实，重点分析对象必须引用≥3个DE维度，额外数据优先充实现有分析对象段落，段内关键词加粗用多 run 实现，入口脚本输出路径必须使用 Team Lead 参数中的完整路径（含时间戳）", status: "pending" },
   { id: "wr6", content: "【加载：步骤6】执行脚本生成报告 → 保存脚本到会话目录后执行", status: "pending" },
