@@ -337,6 +337,8 @@ REPORT_TS=$(date +%s)
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
 - 模板正文参考：`[SESSION_DIR]/template_content.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
+- 报告规划文件：`[SESSION_DIR]/report_plan.md`
+- 数据验证报告：`[SESSION_DIR]/data_usage_check.md`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
@@ -354,10 +356,10 @@ REPORT_TS=$(date +%s)
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
-| 报告只有总量描述 | Data Expert 未按清单提取多维度数据，或 Writer 未消化已有的多维度数据 | 先检查 extracted_data.json 是否包含多维度数据：有则重新调用 Writer 强调消化；无则重新调用 Data Expert |
-| 格式与模板不一致 | Writer 未阅读格式规范 | 重新调用 Writer，强调遵循格式规范 |
-| 文档100+页空白 | python-docx 单位混用（EMU vs twips） | 检查 Writer 指导文档的编码规范 |
-| 文字被截断 | 大字号段落设置了固定行距 | 检查 Writer 指导文档的行距裁切规则 |
+| 报告只有总量描述 | Planner 消化去向表不完整，或 Coder 未按 plan 落实 | 先检查 report_plan.md 消化去向表：完整则重调 Coder；不完整则重调 Planner |
+| 格式与模板不一致 | Planner 格式速查表数值错误，或 Coder 未按速查表编码 | 先检查 report_plan.md 格式速查表：正确则重调 Coder；错误则重调 Planner |
+| 文档100+页空白 | python-docx 单位混用（EMU vs twips） | 检查 Writer-Coder 指导文档的编码规范 |
+| 文字被截断 | 大字号段落设置了固定行距 | 检查 Writer-Coder 指导文档的行距裁切规则 |
 
 ## 进度追踪（强制执行）
 

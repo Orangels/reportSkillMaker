@@ -157,6 +157,7 @@ set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
 - **禁止**直接在命令行执行代码（Python、TypeScript、JavaScript 等）
 - **必须**先将代码写入文件（`.py`），保存到会话目录
 - 然后执行该文件
+- Skill 工具（如 docx skill）产生的中间文件和文件夹也保存到会话目录
 
 ## 进度追踪（强制执行）
 
