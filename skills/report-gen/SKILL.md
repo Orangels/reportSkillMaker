@@ -101,6 +101,7 @@ mkdir -p "$OUTPUT_DIR"
     - 模板文件：[template_path]
     - 会话目录：[SESSION_DIR]
     - 输出文件：[SESSION_DIR]/analysis_template.md
+    - 模板正文输出文件：[SESSION_DIR]/template_content.md
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 读取和解析模板，skill 无法满足的操作再用 python-docx
@@ -116,10 +117,10 @@ mkdir -p "$OUTPUT_DIR"
       * ta2（识别文档类型）— 不可跳过
       * ta5（格式规范分析）— 必须从 DOCX XML 提取字号(w:sz)、颜色(w:color)、加粗(w:b)的实际值
       * ta6（语言风格分析）— 不可跳过
-      * ta8（保存）— 输出统一的 analysis_template.md 文件"
+      * ta8（保存）— 输出 analysis_template.md 和 template_content.md"
 ```
 
-**完成后检查**：确认 `[SESSION_DIR]/analysis_template.md` 已生成且内容非空。
+**完成后检查**：确认 `[SESSION_DIR]/analysis_template.md` 和 `[SESSION_DIR]/template_content.md` 已生成且内容非空。
 
 ### 步骤4：调用 Data Expert Subagent
 
@@ -137,6 +138,7 @@ mkdir -p "$OUTPUT_DIR"
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板正文参考：[SESSION_DIR]/template_content.md
     - 数据文件：[data_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
@@ -180,6 +182,7 @@ mkdir -p "$OUTPUT_DIR"
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板正文参考：[SESSION_DIR]/template_content.md
     - 已有数据文件：[SESSION_DIR]/extracted_data.json
     - 数据源文件：[data_path]
     - 报告限定条件：[report_scope]
@@ -235,8 +238,8 @@ REPORT_TS=$(date +%s)
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
+    - 模板正文参考：[SESSION_DIR]/template_content.md
     - 数据文件：[SESSION_DIR]/extracted_data.json
-    - 原始模板：[template_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
     - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx
@@ -280,6 +283,7 @@ REPORT_TS=$(date +%s)
 - 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx`
 - 中间文件目录：`[SESSION_DIR]/`
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
+- 模板正文参考：`[SESSION_DIR]/template_content.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
@@ -326,8 +330,8 @@ TodoWrite([
 ## 强化验证规则（TodoWrite 动态加载）
 
 ### 步骤3验证：Template Analyst 产出检查
-1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md`
-2. 检查文件大小是否合理（应 > 3KB）
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md` 和 `ls -la [SESSION_DIR]/template_content.md`
+2. 检查文件大小是否合理（analysis_template.md 应 > 3KB，template_content.md 应非空）
 3. **语义验证**（读取文件，检查内容是否完整）：
    - [ ] 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
    - [ ] 包含"数据/信息提取清单"章节（Data Expert 的工作依据）
