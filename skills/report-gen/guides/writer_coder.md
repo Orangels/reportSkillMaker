@@ -164,8 +164,8 @@ set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
 **开始执行前，必须使用以下 TodoWrite 模板（原样复制，禁止精简或合并）：**
 
 TodoWrite([
-  { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → 从 plan 模块1格式速查表取值，分模块写入：格式工具函数文件 + 格式配置文件，每个文件独立 Write，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值", status: "pending" },
-  { id: "wr5", content: "【加载：步骤5+关键原则2+3+4】编写脚本内容部分 → 按 plan 模块3编码章节清单逐章编码并打钩，按模块5消化去向表逐维度落实，按模块4的DE JSON路径定位数据，重点分析对象≥3个DE维度，段内加粗按模块2用多 run 实现，入口脚本输出路径使用 Team Lead 参数中的完整路径（含时间戳）", status: "pending" },
+  { id: "wr4", content: "【加载：步骤4+编码规范】编写脚本格式部分 → ⚠️必须分文件写入(每文件≤150行)：格式工具函数文件 + 格式配置文件，每个文件独立 Write。从 plan 模块1格式速查表取值，set_run_font 必须包含 font.size/color.rgb/bold/name，行距用 twips 原值", status: "pending" },
+  { id: "wr5", content: "【加载：步骤5+关键原则2+3+4】编写脚本内容部分 → ⚠️必须分模块写入(每文件≤150行)：按章节拆为多个模块文件+入口脚本。按 plan 模块3编码章节清单逐章编码并打钩，按模块5消化去向表逐维度落实，按模块4的DE JSON路径定位数据，重点分析对象≥3个DE维度，段内加粗按模块2用多 run 实现，入口脚本输出路径使用 Team Lead 参数中的完整路径（含时间戳）", status: "pending" },
   { id: "wr6", content: "【加载：步骤6】执行脚本生成报告 → 保存脚本到会话目录后执行", status: "pending" }
 ])
 
