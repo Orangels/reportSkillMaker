@@ -30,12 +30,17 @@ argument-hint: "[template.docx] [data.xlsx]"
 skills/report-gen/
 ├── SKILL.md                    ← 本文件
 └── guides/                     ← 各角色的执行指导文档
-    ├── template_analyst.md     ← 模板分析专家指导
+    ├── ta_format.md            ← TA-Format：格式规范整理专家（tf1-tf3）
+    ├── ta_content.md           ← TA-Content：内容分析专家（tc1-tc6）
     ├── data_expert.md          ← 数据提取专家指导（第一二层）
     ├── data_expert_deep.md     ← 数据深度提取专家指导（第三层+主动发现）
     ├── writer_planner.md       ← Writer-Planner：报告规划专家（wr1-wr3）
     ├── writer_coder.md         ← Writer-Coder：报告编码专家（wr4-wr6）
-    └── writer_verifier.md      ← Writer-Verifier：报告验证专家（wr7-wr8）
+    ├── writer_verifier.md      ← Writer-Verifier：报告验证专家（wr7-wr8）
+    ├── template_analyst_legacy.md ← 旧版单体 TA 指导（备用）
+    └── scripts/ta/             ← TA 确定性脚本
+        ├── ta_preprocess.py    ← 预处理：DOCX→JSON+纯文本
+        └── ta_assemble.py      ← 组装：format+content→analysis_template.md
 ```
 
 ## 执行步骤
@@ -85,44 +90,96 @@ mkdir -p "$OUTPUT_DIR"
 - 后续传递给所有 subagent 的路径**必须是绝对路径**，禁止使用 `./` 相对路径
 - 记录以下变量供后续使用：`PROJECT_ROOT`、`SESSION_DIR`、`OUTPUT_DIR`、`template_path`（绝对）、`data_path`（绝对）
 
-### 步骤3：调用 Template Analyst Subagent
+### 步骤3：模板分析（拆分为 3a-3d 四个子步骤）
+
+模板分析已拆分为"预处理脚本 + 2 个聚焦 agent + 组装脚本"架构，降低单次 LLM 上下文负担。
+
+#### 步骤3a：执行预处理脚本（确定性，不调用 LLM）
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_preprocess.py [template_path] [SESSION_DIR]
+```
+
+**产出文件**（均在 `[SESSION_DIR]` 下）：
+- `raw_format.json` — 段落级格式数据 + 内容类型分类 + 类型汇总
+- `page_layout.json` — 页面尺寸/边距/网格
+- `special_elements.json` — Drawing/Shape/页脚等特殊元素
+- `template_content.md` — 纯文本正文（保留标题层级）
+
+**完成后检查**：确认 4 个文件均已生成且非空（`ls -la [SESSION_DIR]/raw_format.json [SESSION_DIR]/page_layout.json [SESSION_DIR]/special_elements.json [SESSION_DIR]/template_content.md`）。
+
+#### 步骤3b：调用 TA-Format Subagent
+
+**3b 和 3c 无依赖关系，可并行调用。**
 
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是模板分析专家，负责分析DOCX模板的统计逻辑、格式规范和写作风格。
+  prompt: "你是格式规范整理专家，负责将预处理提取的 JSON 数据整理成标准化格式分析文档。
 
     ## 执行指导
-    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/template_analyst.md
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/ta_format.md
     严格按照文档中的执行步骤操作。
 
-    ## 任务
-    请分析模板文件 [template_path]，生成模板分析文件。
-
     ## 参数
-    - 模板文件：[template_path]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：[SESSION_DIR]/analysis_template.md
-    - 模板正文输出文件：[SESSION_DIR]/template_content.md
+    - 输入文件：[SESSION_DIR]/raw_format.json, [SESSION_DIR]/page_layout.json, [SESSION_DIR]/special_elements.json
+    - 输出文件：[SESSION_DIR]/format_analysis.md
 
     ## 要求
-    - 优先使用 Skill 工具调用 docx skill 读取和解析模板，skill 无法满足的操作再用 python-docx
-    - 所有中间文件（包括 skill 产生的文件）保存到会话目录
+    - 只读取上述 3 个 JSON 文件，从中提取数据填表
+    - 禁止读取 DOCX 原文件或其他文件
     - 输出文件必须保存到指定路径
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
-    - 必须严格按照执行指导文档中的步骤操作，不能跳过任何步骤
 
     ## 执行纪律（最高优先级）
-    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（ta1-ta8，共 8 步）
-    - 禁止自行精简、合并或重新组织步骤 — 8 步一步不能少
-    - 禁止跳过任何步骤，特别是：
-      * ta2（识别文档类型）— 不可跳过
-      * ta5（格式规范分析）— 必须从 DOCX XML 提取字号(w:sz)、颜色(w:color)、加粗(w:b)的实际值
-      * ta6（语言风格分析）— 不可跳过
-      * ta8（保存）— 输出 analysis_template.md 和 template_content.md"
+    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（tf1-tf3，共 3 步）
+    - 禁止自行精简、合并或重新组织步骤 — 3 步一步不能少"
 ```
 
-**完成后检查**：确认 `[SESSION_DIR]/analysis_template.md` 和 `[SESSION_DIR]/template_content.md` 已生成且内容非空。
+#### 步骤3c：调用 TA-Content Subagent
+
+```
+使用 Agent 工具：
+  subagent_type: "general-purpose"
+  prompt: "你是模板内容分析专家，负责分析模板的内容逻辑、结构框架、语言风格并生成数据提取清单。
+
+    ## 执行指导
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/ta_content.md
+    严格按照文档中的执行步骤操作。
+
+    ## 参数
+    - 会话目录：[SESSION_DIR]
+    - 输入文件：[SESSION_DIR]/template_content.md
+    - 输出文件：[SESSION_DIR]/content_analysis.md
+
+    ## 要求
+    - 只读取 template_content.md（纯文本），不涉及任何格式属性
+    - 禁止读取 DOCX 原文件、JSON 文件或其他文件
+    - 输出文件必须保存到指定路径
+    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
+
+    ## 执行纪律（最高优先级）
+    - 读取指导文档后，必须使用文档'进度追踪'章节中预定义的 TodoWrite 模板（tc1-tc6，共 6 步）
+    - 禁止自行精简、合并或重新组织步骤 — 6 步一步不能少
+    - 禁止跳过任何步骤，特别是：
+      * tc1（结构框架分析）— 动态元素必须写规则，不写死具体内容
+      * tc4（数据提取清单）— 第二层必须输出选择规则+维度模板，禁止写死类别名
+      * tc5（可变元素分析）— 独立章节，固定/可变/动态三类元素详细展开
+      * tc6（验证检查清单）— 4 类各 ≥4 项"
+```
+
+#### 步骤3d：执行组装脚本（确定性，不调用 LLM）
+
+**等待 3b 和 3c 都完成后执行。**
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
+```
+
+**产出文件**：`[SESSION_DIR]/analysis_template.md`（最终 9 章完整文档）
+
+**完成后检查**：确认 `[SESSION_DIR]/analysis_template.md` 已生成且内容非空（应 > 3KB）。同时确认 `[SESSION_DIR]/template_content.md` 存在（步骤3a 已生成）。
 
 ### 步骤4：调用 Data Expert Subagent
 
@@ -369,7 +426,7 @@ REPORT_TS=$(date +%s)
 TodoWrite([
   { id: "step1", content: "【加载：步骤1】参数收集 → 重读本文档'步骤1：参数收集'章节", status: "pending" },
   { id: "step2", content: "【加载：步骤2】初始化会话目录 → 重读本文档'步骤2：初始化会话目录'章节", status: "pending" },
-  { id: "step3", content: "【加载：步骤3+强化验证规则】模板分析 → 调用 subagent 后重读'强化验证规则：步骤3验证'执行验证", status: "pending" },
+  { id: "step3", content: "【加载：步骤3a-3d+强化验证规则】模板分析 → 执行预处理脚本(3a)，并行调用 TA-Format(3b) 和 TA-Content(3c) subagent，执行组装脚本(3d)，重读'强化验证规则：步骤3验证'执行验证", status: "pending" },
   { id: "step4", content: "【加载：步骤4+强化验证规则】数据提取（第一二层）→ 调用 DE subagent 后重读'强化验证规则：步骤4验证'执行验证", status: "pending" },
   { id: "step5", content: "【加载：步骤5+强化验证规则】数据深度提取（第三层+主动发现）→ 调用 DE-deep subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
   { id: "step6a", content: "【加载：步骤6a+强化验证规则】Writer-Planner → 调用 Planner subagent 后重读'强化验证规则：步骤6a验证'验证 plan 质量，通过后才能继续", status: "pending" },
@@ -386,22 +443,40 @@ TodoWrite([
 
 ## 强化验证规则（TodoWrite 动态加载）
 
-### 步骤3验证：Template Analyst 产出检查
-1. 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md` 和 `ls -la [SESSION_DIR]/template_content.md`
-2. 检查文件大小是否合理（analysis_template.md 应 > 3KB，template_content.md 行数应 > 10行）
-3. **语义验证**（读取文件，检查内容是否完整）：
-   - [ ] 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
-   - [ ] 包含"数据/信息提取清单"章节（Data Expert 的工作依据）
-   - [ ] 包含"内嵌加粗模式"或相关段内加粗分析（如模板存在此模式）
-   - [ ] 包含"表达方式"或"语言风格"相关章节
-   - [ ] 包含"数据指标体系"或"数据验证规则"相关内容
-   - [ ] 提取清单第二层包含"分析对象选择规则"（选择条件，非固定类别名）和"分析维度模板"（通用维度表）
-   - [ ] 提取清单包含"文本数据需求"部分（有具体需求或标注"无"+判断依据）
-4. 如果文件不存在、过小、或语义验证不通过：
-   - 输出错误信息，**指明缺失的具体章节**
-   - 重新调用 Template Analyst subagent（最多重试1次）
+### 步骤3验证：模板分析产出检查（3a-3d 四子步骤）
+1. **3a 预处理脚本产出检查**：
+   - 检查 4 个文件是否存在：`ls -la [SESSION_DIR]/raw_format.json [SESSION_DIR]/page_layout.json [SESSION_DIR]/special_elements.json [SESSION_DIR]/template_content.md`
+   - 检查 `raw_format.json` 大小是否合理（应 > 5KB）
+   - 检查 `template_content.md` 行数是否 > 10行
+2. **3b TA-Format 产出检查**：
+   - 检查文件是否存在：`ls -la [SESSION_DIR]/format_analysis.md`
+   - 检查文件大小是否合理（应 > 1KB）
+   - 读取文件，确认包含：格式规范表、段落格式表、页面布局、分隔线、段内加粗模式
+3. **3c TA-Content 产出检查**：
+   - 检查文件是否存在：`ls -la [SESSION_DIR]/content_analysis.md`
+   - 检查文件大小是否合理（应 > 2KB）
+   - 读取文件，确认包含：
+     - [ ] "数据/信息提取清单"章节（Data Expert 的工作依据）
+     - [ ] 提取清单第二层包含"分析对象选择规则"（选择条件，非固定类别名）和"分析维度模板"（通用维度表）
+     - [ ] 提取清单包含"文本数据需求"部分（有具体需求或标注"无"+判断依据）
+     - [ ] "表达方式"或"语言风格"相关章节
+     - [ ] "数据指标体系"或"数据验证规则"相关内容
+4. **3d 组装脚本产出检查**：
+   - 检查文件是否存在：`ls -la [SESSION_DIR]/analysis_template.md`
+   - 检查文件大小是否合理（应 > 3KB）
+   - **语义验证**（读取文件，检查 9 章完整性）：
+     - [ ] 包含"格式规范"相关章节（字号、颜色、加粗的实际数值，非"-"占位）
+     - [ ] 包含"内嵌加粗模式"或相关段内加粗分析（如模板存在此模式）
+     - [ ] 包含"数据/信息提取清单"章节
+     - [ ] 包含"表达方式"或"语言风格"相关章节
+     - [ ] 包含"验证检查清单"章节
+5. 如果任何子步骤产出不合格：
+   - 输出错误信息，**指明失败的子步骤和缺失内容**
+   - 3a 失败：检查 DOCX 文件路径是否正确
+   - 3b/3c 失败：重新调用对应 subagent（最多重试1次）
+   - 3d 失败：检查 3b/3c 的产出是否完整
    - 如果重试仍失败，暂停并询问用户
-5. 验证通过后，用 TodoWrite 将 step3 标记为 completed
+6. 验证通过后，用 TodoWrite 将 step3 标记为 completed
 
 ### 步骤4验证：Data Expert 产出检查（第一二层）
 1. 检查文件是否存在：`ls -la [SESSION_DIR]/extracted_data.json`
