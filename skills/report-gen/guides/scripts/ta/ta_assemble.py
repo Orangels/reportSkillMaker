@@ -88,6 +88,8 @@ def assemble(session_dir):
     # 第3章：格式规范详解 ← format（全部，标题降级 ## → ###）
     # format_analysis.md 内部用 ## 标题，插入章节下需降级为 ###
     format_body = format_md.strip()
+    # 剥离 agent 可能添加的顶层 # 标题
+    format_body = re.sub(r'^#\s+[^\n]+\n*', '', format_body, count=1)
     format_body = re.sub(r'^## ', '### ', format_body, flags=re.MULTILINE)
     chapters.append(("格式规范详解", format_body))
 
@@ -122,12 +124,8 @@ def assemble(session_dir):
     title, body = find_section(cnt_sections, "提取清单", "数据/信息提取")
     chapters.append(("数据/信息提取清单", body))
 
-    # 第9章：验证检查清单 ← content + format 中的格式规范验证
+    # 第9章：验证检查清单 ← content
     _, verify_body = find_section(cnt_sections, "验证检查清单", "验证清单", "检查清单")
-    # 从 format 中找格式相关验证（如果有的话）
-    _, fmt_verify = find_section(fmt_sections, "验证", "检查")
-    if fmt_verify:
-        verify_body = verify_body + "\n\n### 格式规范验证（来自格式分析）\n\n" + fmt_verify if verify_body else fmt_verify
     chapters.append(("验证检查清单", verify_body))
 
     # ── 输出 ─────────────────────────────────────────────────

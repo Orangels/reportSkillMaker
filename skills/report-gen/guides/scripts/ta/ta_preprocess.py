@@ -81,7 +81,7 @@ def _is_red_color(color_val):
         r = int(color_val[0:2], 16)
         g = int(color_val[2:4], 16)
         b = int(color_val[4:6], 16)
-        return r > 200 and g < 80 and b < 80
+        return r > 150 and g < 80 and b < 80
     return False
 
 
@@ -245,8 +245,8 @@ def classify_paragraph(text, p_props, runs_props, para_index, has_title_before, 
     if alignment == "center" and 18 < max_sz_pt < 42 and not any_red:
         return "主标题"
 
-    # 优先级 3：副标题
-    if alignment == "center" and 14 < max_sz_pt <= 18 and has_title_before:
+    # 优先级 3：副标题（排除匹配二级标题模式的段落）
+    if alignment == "center" and 14 < max_sz_pt <= 18 and has_title_before and not RE_LEVEL2.match(text_stripped):
         return "副标题"
 
     # 优先级 4：一级标题
@@ -629,7 +629,16 @@ def process_docx(docx_path, session_dir):
     os.makedirs(session_dir, exist_ok=True)
 
     # 解压 DOCX
-    with zipfile.ZipFile(docx_path, "r") as zf:
+    try:
+        zf = zipfile.ZipFile(docx_path, "r")
+    except zipfile.BadZipFile:
+        print(f"错误：{docx_path} 不是有效的 ZIP/DOCX 文件")
+        sys.exit(1)
+
+    with zf:
+        if "word/document.xml" not in zf.namelist():
+            print(f"错误：{docx_path} 不是有效的 DOCX 文件（缺少 word/document.xml）")
+            sys.exit(1)
         # 解析 document.xml
         doc_xml = zf.open("word/document.xml")
         tree = ET.parse(doc_xml)
@@ -672,11 +681,10 @@ def process_docx(docx_path, session_dir):
 
             # 判断下一个同级元素是否为表格
             next_is_table = False
-            for nxt in body_children[child_idx + 1:]:
+            if child_idx + 1 < len(body_children):
+                nxt = body_children[child_idx + 1]
                 nxt_tag = nxt.tag.split("}")[-1] if "}" in nxt.tag else nxt.tag
-                if nxt_tag == "tbl":
-                    next_is_table = True
-                break
+                next_is_table = (nxt_tag == "tbl")
 
             # 分类
             ct = classify_paragraph(
