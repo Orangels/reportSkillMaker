@@ -739,8 +739,12 @@ def generate_template_content(paragraphs_data):
         if not text:
             continue
         ct = p["content_type"]
+        # 拆分后的类型名（如"二级标题(加粗)"）按基础类型匹配前缀
         prefix = ct_to_md.get(ct, "")
-        if ct == "红头发文单位":
+        if not prefix:
+            base_ct = ct.split("(")[0] if "(" in ct else ct
+            prefix = ct_to_md.get(base_ct, "")
+        if ct.startswith("红头发文单位"):
             lines.append(f"**{text}**\n")
         elif prefix:
             lines.append(f"{prefix}{text}\n")
