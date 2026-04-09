@@ -625,7 +625,8 @@ def _is_all_bold(para):
     return all(r["props"].get("bold", False) for r in runs)
 
 
-VARIANT_THRESHOLD = 0.25  # 次要变体占比阈值
+VARIANT_THRESHOLD = 0.25  # 字体变体：次要字体 run 占比阈值
+BOLD_VARIANT_THRESHOLD = 0.12  # 加粗变体：全段加粗段落占比阈值（加粗是二值的，比字体更明确）
 MIN_PARAGRAPHS_FOR_SPLIT = 2  # 至少 2 段才考虑拆分
 
 
@@ -697,7 +698,7 @@ def detect_and_split_variants(summary, paragraphs_data):
         # 检查是否超过阈值
         total = len(indices)
         minor_count = min(len(g) for g in bold_groups.values())
-        if minor_count / total < VARIANT_THRESHOLD:
+        if minor_count / total < BOLD_VARIANT_THRESHOLD:
             final_summary[ct] = entry
             continue
 
