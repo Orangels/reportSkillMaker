@@ -464,6 +464,13 @@ def _extract_footer(zip_file):
                     texts.append(t.text.strip())
             full_text = "".join(texts)
             if full_text:
+                # 去重：检测重复模式（奇偶页拼接导致的重复）
+                full_text = _deduplicate_footer_text(full_text)
+                # 模板化：将数字替换为 X
+                full_text = re.sub(r'\d+', 'X', full_text)
+                # 规范化：统一破折号格式（多种 dash 字符归一）
+                full_text = _normalize_footer_format(full_text)
+
                 # 提取字体和字号
                 font = None
                 sz_pt = None
@@ -484,6 +491,34 @@ def _extract_footer(zip_file):
         except Exception:
             continue
     return None
+
+
+def _normalize_footer_format(text):
+    """规范化页脚格式：将各种 dash 组合统一为标准格式"""
+    # 将连续的 dash 字符（—、-、–）合并为单个 —
+    text = re.sub(r'[—–\-]+', '—', text)
+    # 清理 — 与内容之间的多余空格
+    text = re.sub(r'\s*—\s*', ' — ', text)
+    return text.strip()
+
+
+def _deduplicate_footer_text(text):
+    """检测并去除页脚文本中的重复模式（如奇偶页拼接产生的重复）"""
+    length = len(text)
+    if length < 4:
+        return text
+    # 尝试从中点附近切分，检查前后是否相似
+    for mid in range(length // 2 - 1, length // 2 + 2):
+        if mid <= 0 or mid >= length:
+            continue
+        first_half = text[:mid].strip()
+        second_half = text[mid:].strip()
+        # 将数字替换后比较结构是否相同
+        norm_first = re.sub(r'\d+', '#', first_half)
+        norm_second = re.sub(r'\d+', '#', second_half)
+        if norm_first == norm_second:
+            return first_half
+    return text
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -551,6 +586,7 @@ def build_content_type_summary(paragraphs_data):
         spacing_line = None
         spacing_lineRule = None
         indent_firstLine = None
+        indent_firstLineChars = None
 
         for p in paras:
             pp = p["paragraph_properties"]
@@ -563,8 +599,11 @@ def build_content_type_summary(paragraphs_data):
                 if sp.get("lineRule") and not spacing_lineRule:
                     spacing_lineRule = sp["lineRule"]
             ind = pp.get("indent")
-            if ind and ind.get("firstLine") and not indent_firstLine:
-                indent_firstLine = ind["firstLine"]
+            if ind:
+                if ind.get("firstLine") and not indent_firstLine:
+                    indent_firstLine = ind["firstLine"]
+                if ind.get("firstLineChars") and not indent_firstLineChars:
+                    indent_firstLineChars = ind["firstLineChars"]
 
         entry = {
             "paragraph_indices": indices,
@@ -578,11 +617,200 @@ def build_content_type_summary(paragraphs_data):
             "spacing_line": spacing_line,
             "spacing_lineRule": spacing_lineRule,
             "indent_firstLine": indent_firstLine,
+            "indent_firstLineChars": indent_firstLineChars,
             "extra_xml_attrs": sorted(set(all_extra_attrs)) if all_extra_attrs else [],
         }
         summary[ct] = entry
 
     return summary
+
+
+def _aggregate_subgroup(paras):
+    """对一组段落重新聚合格式属性（与 build_content_type_summary 内部逻辑一致）"""
+    indices = [p["index"] for p in paras]
+
+    all_fonts, all_szs, all_colors, all_bolds, all_extra_attrs = [], [], [], [], []
+    for p in paras:
+        for r in p.get("runs", []):
+            rp = r["props"]
+            if rp.get("font_eastAsia"):
+                all_fonts.append(rp["font_eastAsia"])
+            if rp.get("sz_half_pt"):
+                all_szs.append(rp["sz_half_pt"])
+            if rp.get("color"):
+                all_colors.append(rp["color"])
+            all_bolds.append(rp.get("bold", False))
+            if rp.get("kern"):
+                all_extra_attrs.append(f"w:kern val={rp['kern']}")
+            if rp.get("fitText"):
+                all_extra_attrs.append(f"w:fitText val={rp['fitText']}")
+
+    def _mode(lst):
+        if not lst:
+            return None
+        counts = defaultdict(int)
+        for v in lst:
+            counts[v] += 1
+        return max(counts, key=counts.get)
+
+    font_variant_counts = defaultdict(int)
+    for f in all_fonts:
+        font_variant_counts[f] += 1
+    font_variants = dict(font_variant_counts) if len(font_variant_counts) > 1 else {}
+
+    dominant_font = _mode(all_fonts)
+    dominant_sz = _mode(all_szs)
+    dominant_color = _mode(all_colors)
+    dominant_bold = _mode(all_bolds) if all_bolds else False
+
+    alignment = None
+    spacing_line = None
+    spacing_lineRule = None
+    indent_firstLine = None
+    indent_firstLineChars = None
+
+    for p in paras:
+        pp = p["paragraph_properties"]
+        if pp.get("alignment") and not alignment:
+            alignment = pp["alignment"]
+        sp = pp.get("spacing")
+        if sp:
+            if sp.get("line") and not spacing_line:
+                spacing_line = sp["line"]
+            if sp.get("lineRule") and not spacing_lineRule:
+                spacing_lineRule = sp["lineRule"]
+        ind = pp.get("indent")
+        if ind:
+            if ind.get("firstLine") and not indent_firstLine:
+                indent_firstLine = ind["firstLine"]
+            if ind.get("firstLineChars") and not indent_firstLineChars:
+                indent_firstLineChars = ind["firstLineChars"]
+
+    return {
+        "paragraph_indices": indices,
+        "dominant_font_eastAsia": dominant_font,
+        "font_variants": font_variants,
+        "dominant_sz_half_pt": dominant_sz,
+        "dominant_sz_pt": int(dominant_sz) / HALF_PT_PER_PT if dominant_sz else None,
+        "dominant_color": dominant_color,
+        "dominant_bold": dominant_bold,
+        "alignment": alignment,
+        "spacing_line": spacing_line,
+        "spacing_lineRule": spacing_lineRule,
+        "indent_firstLine": indent_firstLine,
+        "indent_firstLineChars": indent_firstLineChars,
+        "extra_xml_attrs": sorted(set(all_extra_attrs)) if all_extra_attrs else [],
+    }
+
+
+def _first_run_font(para):
+    """取段落首个有字体信息的 run 的 font_eastAsia"""
+    for r in para.get("runs", []):
+        f = r["props"].get("font_eastAsia")
+        if f:
+            return f
+    return None
+
+
+def _is_all_bold(para):
+    """判断段落是否全段加粗（所有 run 都 bold）"""
+    runs = para.get("runs", [])
+    if not runs:
+        return False
+    return all(r["props"].get("bold", False) for r in runs)
+
+
+VARIANT_THRESHOLD = 0.25  # 次要变体占比阈值
+MIN_PARAGRAPHS_FOR_SPLIT = 2  # 至少 2 段才考虑拆分
+
+
+def detect_and_split_variants(summary, paragraphs_data):
+    """
+    检测 content_type_summary 中格式分化的类型，自动拆分为子类型。
+    纯格式驱动，不依赖文本内容。
+
+    检测维度：
+    1. 字体变体：同一类型内首 run 字体不同 → 按字体拆分
+    2. 加粗变体：同一类型内部分全段加粗、部分非全段加粗 → 按加粗拆分
+
+    策略：
+    - 先做字体变体检测（修正 dominant_font 或拆分）
+    - 再对结果做加粗变体检测（进一步拆分）
+    """
+    idx_map = {p["index"]: p for p in paragraphs_data}
+
+    # ── 第一轮：字体变体检测 ──────────────────────────
+    after_font = {}
+    for ct, entry in summary.items():
+        fv = entry.get("font_variants", {})
+        if len(fv) < 2 or len(entry["paragraph_indices"]) < MIN_PARAGRAPHS_FOR_SPLIT:
+            after_font[ct] = entry
+            continue
+        total_runs = sum(fv.values())
+        sorted_fonts = sorted(fv.items(), key=lambda x: x[1], reverse=True)
+        secondary_ratio = sorted_fonts[1][1] / total_runs
+        if secondary_ratio < VARIANT_THRESHOLD:
+            after_font[ct] = entry
+            continue
+
+        # 按首 run 字体分组
+        font_groups = defaultdict(list)
+        for idx in entry["paragraph_indices"]:
+            para = idx_map[idx]
+            font = _first_run_font(para)
+            font_groups[font or "unknown"].append(para)
+
+        if len(font_groups) == 1:
+            first_run_font = list(font_groups.keys())[0]
+            entry["dominant_font_eastAsia"] = first_run_font
+            after_font[ct] = entry
+        else:
+            for font_name, paras in font_groups.items():
+                sub_entry = _aggregate_subgroup(paras)
+                sub_entry["dominant_font_eastAsia"] = font_name
+                after_font[f"{ct}({font_name})"] = sub_entry
+
+    # ── 第二轮：加粗变体检测 ──────────────────────────
+    final_summary = {}
+    for ct, entry in after_font.items():
+        indices = entry["paragraph_indices"]
+        if len(indices) < MIN_PARAGRAPHS_FOR_SPLIT:
+            final_summary[ct] = entry
+            continue
+
+        # 统计全段加粗 vs 非全段加粗
+        bold_groups = defaultdict(list)
+        for idx in indices:
+            para = idx_map[idx]
+            is_bold = _is_all_bold(para)
+            bold_groups[is_bold].append(para)
+
+        if len(bold_groups) < 2:
+            final_summary[ct] = entry
+            continue
+
+        # 检查是否超过阈值
+        total = len(indices)
+        minor_count = min(len(g) for g in bold_groups.values())
+        if minor_count / total < VARIANT_THRESHOLD:
+            final_summary[ct] = entry
+            continue
+
+        # 拆分
+        for is_bold, paras in bold_groups.items():
+            sub_entry = _aggregate_subgroup(paras)
+            # 保持首 run 字体修正
+            first_fonts = [_first_run_font(p) for p in paras]
+            first_fonts = [f for f in first_fonts if f]
+            if first_fonts:
+                font_counts = defaultdict(int)
+                for f in first_fonts:
+                    font_counts[f] += 1
+                sub_entry["dominant_font_eastAsia"] = max(font_counts, key=font_counts.get)
+            label = "加粗" if is_bold else "常规"
+            final_summary[f"{ct}({label})"] = sub_entry
+
+    return final_summary
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -716,9 +944,22 @@ def process_docx(docx_path, session_dir):
         # ── content_type_summary ──────────────────────────
         content_type_summary = build_content_type_summary(paragraphs_data)
 
-        # ── 构建 raw_format.json ─────────────────────────
+        # ── 格式变体自动检测与拆分 ───────────────────────
+        content_type_summary = detect_and_split_variants(content_type_summary, paragraphs_data)
+
+        # ── 构建 raw_format.json（瘦身：只保留下游需要的数据）──
+        # paragraphs 只保留 tf3 加粗分析需要的字段，去掉完整 run 详情
+        slim_paragraphs = []
+        for p in paragraphs_data:
+            if p.get("has_mixed_bold"):
+                slim_paragraphs.append({
+                    "index": p["index"],
+                    "content_type": p["content_type"],
+                    "has_mixed_bold": True,
+                    "bold_keywords": p.get("bold_keywords", []),
+                })
         raw_format = {
-            "paragraphs": paragraphs_data,
+            "bold_paragraphs": slim_paragraphs,
             "content_type_summary": content_type_summary,
         }
 

@@ -34,13 +34,13 @@
 
 3. 从 `content_type_summary` 生成**段落格式表**：
 
-| 内容类型 | 行距(twips) | 行距规则 | 首行缩进(twips) | 备注 |
-|---------|-----------|---------|---------------|------|
-| （从 key 填入） | spacing_line | spacing_lineRule | indent_firstLine | 字号>行距时标注"不适用固定行距" |
+| 内容类型 | 行距(twips) | 行距规则 | 首行缩进(twips) | 首行缩进(chars) | 备注 |
+|---------|-----------|---------|---------------|----------------|------|
+| （从 key 填入） | spacing_line | spacing_lineRule | indent_firstLine | indent_firstLineChars | （见规则） |
 
 **备注列规则**：
-- 若 `dominant_sz_pt` × 20 > `spacing_line`（将两者都转为 twips 比较），标注"字号大于行距，不适用固定行距"
 - 若 `spacing_line` 为 null，标注"不设行距限制"
+- 否则留空
 
 ### 步骤 tf2：页面布局 + 分隔线
 
@@ -68,9 +68,8 @@
 
 ### 步骤 tf3：段内加粗模式分析
 
-1. 读取 `raw_format.json` 的 `paragraphs` 数组
-2. 筛选 `has_mixed_bold == true` 的段落
-3. 收集这些段落的 `bold_keywords` 字段
+1. 读取 `raw_format.json` 的 `bold_paragraphs` 数组（已预筛选 `has_mixed_bold == true` 的段落）
+2. 收集这些段落的 `bold_keywords` 字段
 4. 归纳加粗规律：
 
 ```
@@ -82,7 +81,7 @@
 加粗规律总结：[一句话描述，如"对关键数据指标和分类名称使用段内加粗强调"]
 ```
 
-- 如果无 `has_mixed_bold == true` 的段落，写"本模板无段内加粗模式"
+- 如果 `bold_paragraphs` 为空数组，写"本模板无段内加粗模式"
 
 ## 输出文件
 
