@@ -146,6 +146,21 @@ set_line_spacing_exact(paragraph, 560)  # 28pt 固定行距
 - **原因**：`Twips(560)` 返回 355600 EMU，被直接写入 XML `w:line` 属性，该属性期望 twips 值 560
 - **解决**：操作 XML 属性时使用原始 twips/half-points 数值，不用 `Twips()`/`Pt()` 等转换函数
 
+### 页面尺寸必须用 Mm() 设置（严重！错误用法导致页面为点、文档全空白）
+```python
+# ✅ 正确：页面尺寸用 width_mm/height_mm，边距用 twips/20 转 pt
+from docx.shared import Mm, Pt
+section.page_width  = Mm(page_layout["page_size"]["width_mm"])
+section.page_height = Mm(page_layout["page_size"]["height_mm"])
+section.left_margin   = Pt(page_layout["margins"]["left_twips"]   / 20)
+section.right_margin  = Pt(page_layout["margins"]["right_twips"]  / 20)
+section.top_margin    = Pt(page_layout["margins"]["top_twips"]    / 20)
+section.bottom_margin = Pt(page_layout["margins"]["bottom_twips"] / 20)
+
+# ❌ 致命错误：直接赋 twips 原始值（section.* 属性期望 EMU）
+section.page_width = page_layout["page_size"]["width_twips"]
+```
+
 ### 特殊段落行距裁切（严重！会导致文字只显示一半）
 - **现象**：红头标题、大字号段落只显示一半，文字被截断
 - **原因**：字号(pt) > 行距(pt) 的段落被设置了固定行距
