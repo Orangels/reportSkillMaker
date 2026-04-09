@@ -70,7 +70,7 @@ skills/report-gen/
 
 **当前工作目录**：!`pwd`
 
-**🚫 禁止 cd！** 以上路径即为 PROJECT_ROOT，直接执行以下命令：
+**🚫 禁止 cd！** 以上路径即为 PROJECT_ROOT，**原样执行以下命令，禁止精简或修改变量定义**：
 
 ```bash
 PROJECT_ROOT="$(pwd)"
@@ -78,7 +78,11 @@ SESSION_DIR="$PROJECT_ROOT/middle_file/$(date +%s%3N)_session"
 OUTPUT_DIR="$PROJECT_ROOT/output"
 mkdir -p "$SESSION_DIR"
 mkdir -p "$OUTPUT_DIR"
+echo "PROJECT_ROOT=$PROJECT_ROOT"
+echo "SESSION_DIR=$SESSION_DIR"
 ```
+
+**执行后必须确认**：`SESSION_DIR` 输出为完整的 `…/middle_file/[数字]_session` 路径（非空、非仅 `middle_file/`）。若输出不符，停止并重新执行上方命令。
 
 **PROJECT_ROOT 路径约束（最高优先级）**：
 - **禁止在整个 skill 执行过程中使用 `cd` 命令**
