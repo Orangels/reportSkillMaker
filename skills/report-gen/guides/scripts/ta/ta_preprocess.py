@@ -947,6 +947,15 @@ def process_docx(docx_path, session_dir):
         # ── 格式变体自动检测与拆分 ───────────────────────
         content_type_summary = detect_and_split_variants(content_type_summary, paragraphs_data)
 
+        # 同步更新 paragraphs_data 中的 content_type（使用拆分后的子类型名）
+        index_to_ct = {}
+        for ct, entry in content_type_summary.items():
+            for idx in entry["paragraph_indices"]:
+                index_to_ct[idx] = ct
+        for p in paragraphs_data:
+            if p["index"] in index_to_ct:
+                p["content_type"] = index_to_ct[p["index"]]
+
         # ── 构建 raw_format.json（瘦身：只保留下游需要的数据）──
         # paragraphs 只保留 tf3 加粗分析需要的字段，去掉完整 run 详情
         slim_paragraphs = []

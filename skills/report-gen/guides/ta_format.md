@@ -70,7 +70,7 @@
 
 1. 读取 `raw_format.json` 的 `bold_paragraphs` 数组（已预筛选 `has_mixed_bold == true` 的段落）
 2. 收集这些段落的 `bold_keywords` 字段
-4. 归纳加粗规律：
+3. 归纳加粗规律：
 
 ```
 段内加粗段落数：[N] 段
