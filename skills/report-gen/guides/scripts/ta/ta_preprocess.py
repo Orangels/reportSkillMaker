@@ -525,108 +525,18 @@ def _deduplicate_footer_text(text):
 # 7. content_type_summary 聚合
 # ═══════════════════════════════════════════════════════════════════
 
-def build_content_type_summary(paragraphs_data):
-    """对每种内容类型，聚合主导格式属性"""
-    type_groups = defaultdict(list)
-    for p in paragraphs_data:
-        ct = p["content_type"]
-        if ct == "空段落":
-            continue
-        type_groups[ct].append(p)
-
-    summary = {}
-    for ct, paras in type_groups.items():
-        indices = [p["index"] for p in paras]
-
-        # 收集所有 run 属性
-        all_fonts = []
-        all_szs = []
-        all_colors = []
-        all_bolds = []
-        all_extra_attrs = []
-
-        for p in paras:
-            for r in p.get("runs", []):
-                rp = r["props"]
-                if rp.get("font_eastAsia"):
-                    all_fonts.append(rp["font_eastAsia"])
-                if rp.get("sz_half_pt"):
-                    all_szs.append(rp["sz_half_pt"])
-                if rp.get("color"):
-                    all_colors.append(rp["color"])
-                all_bolds.append(rp.get("bold", False))
-                # 额外 XML 属性
-                if rp.get("kern"):
-                    all_extra_attrs.append(f"w:kern val={rp['kern']}")
-                if rp.get("fitText"):
-                    all_extra_attrs.append(f"w:fitText val={rp['fitText']}")
-
-        # 取众数
-        def _mode(lst):
-            if not lst:
-                return None
-            counts = defaultdict(int)
-            for v in lst:
-                counts[v] += 1
-            return max(counts, key=counts.get)
-
-        # 字体变体统计（同一内容类型下不同字体的出现次数）
-        font_variant_counts = defaultdict(int)
-        for f in all_fonts:
-            font_variant_counts[f] += 1
-        font_variants = dict(font_variant_counts) if len(font_variant_counts) > 1 else {}
-
-        dominant_font = _mode(all_fonts)
-        dominant_sz = _mode(all_szs)
-        dominant_color = _mode(all_colors)
-        dominant_bold = _mode(all_bolds) if all_bolds else False
-
-        # 段落级属性取第一个非空
-        alignment = None
-        spacing_line = None
-        spacing_lineRule = None
-        indent_firstLine = None
-        indent_firstLineChars = None
-
-        for p in paras:
-            pp = p["paragraph_properties"]
-            if pp.get("alignment") and not alignment:
-                alignment = pp["alignment"]
-            sp = pp.get("spacing")
-            if sp:
-                if sp.get("line") and not spacing_line:
-                    spacing_line = sp["line"]
-                if sp.get("lineRule") and not spacing_lineRule:
-                    spacing_lineRule = sp["lineRule"]
-            ind = pp.get("indent")
-            if ind:
-                if ind.get("firstLine") and not indent_firstLine:
-                    indent_firstLine = ind["firstLine"]
-                if ind.get("firstLineChars") and not indent_firstLineChars:
-                    indent_firstLineChars = ind["firstLineChars"]
-
-        entry = {
-            "paragraph_indices": indices,
-            "dominant_font_eastAsia": dominant_font,
-            "font_variants": font_variants,
-            "dominant_sz_half_pt": dominant_sz,
-            "dominant_sz_pt": int(dominant_sz) / HALF_PT_PER_PT if dominant_sz else None,
-            "dominant_color": dominant_color,
-            "dominant_bold": dominant_bold,
-            "alignment": alignment,
-            "spacing_line": spacing_line,
-            "spacing_lineRule": spacing_lineRule,
-            "indent_firstLine": indent_firstLine,
-            "indent_firstLineChars": indent_firstLineChars,
-            "extra_xml_attrs": sorted(set(all_extra_attrs)) if all_extra_attrs else [],
-        }
-        summary[ct] = entry
-
-    return summary
+def _mode(lst):
+    """取列表众数，空列表返回 None"""
+    if not lst:
+        return None
+    counts = defaultdict(int)
+    for v in lst:
+        counts[v] += 1
+    return max(counts, key=counts.get)
 
 
 def _aggregate_subgroup(paras):
-    """对一组段落重新聚合格式属性（与 build_content_type_summary 内部逻辑一致）"""
+    """对一组段落聚合主导格式属性，返回 content_type_summary 条目格式"""
     indices = [p["index"] for p in paras]
 
     all_fonts, all_szs, all_colors, all_bolds, all_extra_attrs = [], [], [], [], []
@@ -645,30 +555,14 @@ def _aggregate_subgroup(paras):
             if rp.get("fitText"):
                 all_extra_attrs.append(f"w:fitText val={rp['fitText']}")
 
-    def _mode(lst):
-        if not lst:
-            return None
-        counts = defaultdict(int)
-        for v in lst:
-            counts[v] += 1
-        return max(counts, key=counts.get)
-
     font_variant_counts = defaultdict(int)
     for f in all_fonts:
         font_variant_counts[f] += 1
     font_variants = dict(font_variant_counts) if len(font_variant_counts) > 1 else {}
 
-    dominant_font = _mode(all_fonts)
     dominant_sz = _mode(all_szs)
-    dominant_color = _mode(all_colors)
-    dominant_bold = _mode(all_bolds) if all_bolds else False
 
-    alignment = None
-    spacing_line = None
-    spacing_lineRule = None
-    indent_firstLine = None
-    indent_firstLineChars = None
-
+    alignment = spacing_line = spacing_lineRule = indent_firstLine = indent_firstLineChars = None
     for p in paras:
         pp = p["paragraph_properties"]
         if pp.get("alignment") and not alignment:
@@ -688,12 +582,12 @@ def _aggregate_subgroup(paras):
 
     return {
         "paragraph_indices": indices,
-        "dominant_font_eastAsia": dominant_font,
+        "dominant_font_eastAsia": _mode(all_fonts),
         "font_variants": font_variants,
         "dominant_sz_half_pt": dominant_sz,
         "dominant_sz_pt": int(dominant_sz) / HALF_PT_PER_PT if dominant_sz else None,
-        "dominant_color": dominant_color,
-        "dominant_bold": dominant_bold,
+        "dominant_color": _mode(all_colors),
+        "dominant_bold": _mode(all_bolds) if all_bolds else False,
         "alignment": alignment,
         "spacing_line": spacing_line,
         "spacing_lineRule": spacing_lineRule,
@@ -701,6 +595,17 @@ def _aggregate_subgroup(paras):
         "indent_firstLineChars": indent_firstLineChars,
         "extra_xml_attrs": sorted(set(all_extra_attrs)) if all_extra_attrs else [],
     }
+
+
+def build_content_type_summary(paragraphs_data):
+    """对每种内容类型，聚合主导格式属性"""
+    type_groups = defaultdict(list)
+    for p in paragraphs_data:
+        ct = p["content_type"]
+        if ct == "空段落":
+            continue
+        type_groups[ct].append(p)
+    return {ct: _aggregate_subgroup(paras) for ct, paras in type_groups.items()}
 
 
 def _first_run_font(para):
