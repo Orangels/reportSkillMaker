@@ -201,7 +201,6 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
-    - 模板正文参考：[SESSION_DIR]/template_content.md
     - 数据文件：[data_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
@@ -245,7 +244,6 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md
-    - 模板正文参考：[SESSION_DIR]/template_content.md
     - 已有数据文件：[SESSION_DIR]/extracted_data.json
     - 数据源文件：[data_path]
     - 报告限定条件：[report_scope]
