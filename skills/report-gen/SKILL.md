@@ -237,7 +237,7 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：`ls -la [SESSION_DIR]/extracted_data.json` — 文件存在且 > 15KB 则通过；否则重调 DE subagent（最多1次）。
+**完成后检查**：`ls -la [SESSION_DIR]/extracted_data.json` — 文件存在且 > 15KB 则通过（阈值基于警务月报类长篇报告，换模板时需重新评估）；否则重调 DE subagent（最多1次）。
 
 ### 步骤5：调用 Data Expert Deep Subagent（第三层+主动发现）
 
@@ -283,7 +283,7 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：`ls -la [SESSION_DIR]/extracted_data.json` — 文件存在且 > 20KB 则通过；否则重调 DE-deep subagent（最多1次）。
+**完成后检查**：`ls -la [SESSION_DIR]/extracted_data.json` — 文件存在且 > 20KB 则通过（阈值基于警务月报类长篇报告，换模板时需重新评估）；否则重调 DE-deep subagent（最多1次）。
 
 ### 步骤6：调用 Writer 三阶段 Subagent（Planner → Coder → Verifier）
 
@@ -428,7 +428,7 @@ REPORT_TS=$(date +%s)
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` — 文件存在且 > 50KB 则通过；否则重调 Build subagent（最多1次）。
+**完成后检查**：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` — 文件存在且 > 50KB 则通过（阈值基于警务月报类长篇报告，换模板时需重新评估）；否则重调 Build subagent（最多1次）。
 
 #### 步骤6c：调用 Writer-Verifier Subagent
 
@@ -458,10 +458,7 @@ REPORT_TS=$(date +%s)
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：
-1. 确认 `[SESSION_DIR]/data_usage_check.md` 已生成
-2. 读取验证结论，判断通过/不通过
-3. **不通过时**：根据缺陷严重程度决定是否重调 Coder（最多重试1次）
+**完成后检查**：`ls -la [SESSION_DIR]/data_usage_check.md` — 存在且 > 1KB 则通过；否则重调 Verifier subagent（最多1次）。
 
 ### 步骤7：质量验证
 
