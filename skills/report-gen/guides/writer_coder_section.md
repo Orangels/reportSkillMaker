@@ -51,7 +51,7 @@
 
 | 文件 | 内容 |
 |------|------|
-| `[session_dir]/section_[section_id].py` | 本章节内容生成代码，定义 `write_section(doc)` 函数 |
+| `[session_dir]/section_[section_id].py` | 本章节内容生成代码，定义 `write_section(doc, data_slice_path)` 函数 |
 
 ## format_utils.py 接口规范（稳定接口，直接调用）
 

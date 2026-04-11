@@ -54,7 +54,7 @@ from docx.shared import Mm, Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from format_config import STYLES, PAGE_LAYOUT, FOOTER_FONT, FOOTER_SIZE_PT
+from format_config import PAGE_LAYOUT, FOOTER_FONT, FOOTER_SIZE_PT
 
 # ⚠️ 以下 import 必须按 section_manifest.json 实际 sections 列表动态生成，有几个 section 写几行
 # ⚠️ 下方仅为格式示例，禁止直接使用，必须全部替换为 manifest 中实际的 section_id
@@ -76,7 +76,7 @@ def add_footer(doc):
         run = para.add_run()
         run.font.name = FOOTER_FONT
         run.font.size = Pt(FOOTER_SIZE_PT)
-        # 写入"— "
+        # 写入页码域（PAGE 域）
         fldBegin = OxmlElement("w:fldChar")
         fldBegin.set(qn("w:fldCharType"), "begin")
         instrText = OxmlElement("w:instrText")
