@@ -322,7 +322,19 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：`ls -la [SESSION_DIR]/report_plan.md [SESSION_DIR]/section_manifest.json` — report_plan.md > 2KB、section_manifest.json > 1KB，且 `ls [SESSION_DIR]/data_slice_*.json` 确认每个切片文件存在，则通过；否则重调 Planner（最多1次）。
+**完成后检查**：
+1. `ls -la [SESSION_DIR]/report_plan.md [SESSION_DIR]/section_manifest.json` — report_plan.md > 2KB、section_manifest.json > 1KB 则通过；否则重调 Planner（最多1次）。
+2. 执行以下命令验证每个 data_slice 文件存在：
+```bash
+python3 -c "
+import json, os, sys
+m = json.load(open('[SESSION_DIR]/section_manifest.json'))
+missing = [s['data_slice'] for s in m['sections'] if not os.path.exists(s['data_slice'])]
+if missing: sys.exit('缺失: ' + ', '.join(missing))
+print(f'data_slice 验证通过，共 {len(m[\"sections\"])} 个切片')
+"
+```
+有缺失则重调 Planner（最多1次）。
 
 **⚠️ Planner 调用后，Team Lead 必须执行完成后检查（ls -la 验证文件大小），通过后才能调用 Coder。**
 
@@ -512,7 +524,7 @@ TodoWrite([
   { id: "step6b_setup", content: "【步骤6b-1】Writer-Coder-Setup → 先执行 REPORT_TS=$(date +%s) 生成时间戳，调用 setup subagent 生成 format_utils.py + format_config.py，验证两文件存在", status: "pending" },
   { id: "step6b_sections", content: "【步骤6b-2】Writer-Coder-Section × N → 读取 section_manifest.json 获取所有 section，并行调用每个 section subagent，验证所有 section_[id].py 存在", status: "pending" },
   { id: "step6b_build", content: "【步骤6b-3】Writer-Coder-Build → 调用 build subagent 组装 main.py 并执行，ls -la 验证输出 docx > 50KB", status: "pending" },
-  { id: "step6c", content: "【步骤6c】Writer-Verifier → 调用 Verifier subagent，ls -la 验证 data_usage_check.md > 1KB，读取验证结论决定是否重试", status: "pending" },
+  { id: "step6c", content: "【步骤6c】Writer-Verifier → 调用 Verifier subagent，ls -la 验证 data_usage_check.md > 1KB", status: "pending" },
   { id: "step7", content: "【加载：步骤7】质量验证 → 重读本文档'步骤7：质量验证'章节", status: "pending" },
   { id: "step8", content: "【加载：步骤8】交付 → 重读本文档'步骤8：交付'章节", status: "pending" }
 ])
