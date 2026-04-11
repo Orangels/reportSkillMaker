@@ -34,7 +34,7 @@ skills/report-gen/
     ├── ta_content.md           ← TA-Content：内容分析专家（tc1-tc6）
     ├── data_expert.md          ← 数据提取专家指导（第一二层）
     ├── data_expert_deep.md     ← 数据深度提取专家指导（第三层+主动发现）
-    ├── writer_planner.md       ← Writer-Planner：报告规划专家（wr1-wr3）
+    ├── writer_planner.md       ← Writer-Planner：报告规划专家（wr1-wr3b）
     ├── writer_coder_setup.md   ← Writer-Coder-Setup：格式工具生成（wr4）
     ├── writer_coder_section.md ← Writer-Coder-Section：通用章节代码生成（wr5）
     ├── writer_coder_build.md   ← Writer-Coder-Build：报告组装与执行（wr6）
@@ -298,7 +298,7 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
 
     ## 执行指导
     请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_planner.md
-    严格按照文档中的执行步骤操作，使用 wr1-wr3 TodoWrite 模板。
+    严格按照文档中的执行步骤操作，使用 wr1-wr3b TodoWrite 模板（共4步：wr1/wr2/wr3/wr3b）。
 
     ## 参数
     - 模板分析文件：[SESSION_DIR]/analysis_template.md

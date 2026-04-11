@@ -94,7 +94,12 @@
 - 建议章节与前文分析的问题建立对应关系
 - report_scope（报告限定条件）决定报告标题和数据筛选范围
 
-**3.4 按下方模板填写并保存为 report_plan.md**
+**3.4 使用 Write 工具将内容写入 `[会话目录]/report_plan.md`**
+
+> **⚠️ 必须使用 Write 工具实际写入文件，禁止只在上下文中生成内容。**
+> - 按下方"report_plan.md 输出模板（7 个必填模块）"章节骨架逐模块填写，每个模块标注"必填"的一个不能省略
+> - Write 完成后执行 `ls -la [会话目录]/report_plan.md` 确认文件存在
+> - **wr3 完成标准**：文件已实际写入磁盘 + 7 个模块齐全，才可将 wr3 标记 completed 并继续 wr3b
 
 **3.5 生成 section_manifest.json + data_slice_ch*.json（新增，必须完成）**
 
@@ -227,7 +232,8 @@
 TodoWrite([
   { id: "wr1", content: "【加载：步骤1】阅读模板分析文件 → 提取格式规范中字号/颜色/加粗/字体的实际数值，记录段内加粗模式，理解结构框架逻辑", status: "pending" },
   { id: "wr2", content: "【加载：步骤2+关键原则2】盘点数据资产 + 阅读模板正文 → 全量遍历 DE 维度，理解 TA 框架上层逻辑，检查算术自洽性，阅读 template_content.md 学习段落组织模式和详略比例", status: "pending" },
-  { id: "wr3", content: "【加载：步骤3+关键原则2+3】规划报告结构 + 数据消化方案 → 按 report_plan.md 输出模板逐模块填写 7 个必填模块（格式速查表含对齐列/加粗规则/编码清单/维度列表/消化去向表/写法规则/重要程度标注），标注分析对象重要程度（重点≥3维度），覆盖 DE 全部数据节点，输出到会话目录；然后按固定顺序生成 section_manifest.json + data_slice：①划 section 边界→②裁 plan_text（共享模块全量+专属内容裁剪）→③切 data_slice（按 Module4 JSON 路径，共享数据冗余复制）→④写 section_manifest.json", status: "pending" }
+  { id: "wr3", content: "【加载：步骤3.1-3.4 + 关键原则2+3 + report_plan.md输出模板章节】规划报告结构 + 数据消化方案 → 按输出模板逐模块填写 7 个必填模块（Module1格式速查表/Module2加粗规则/Module3编码清单/Module4维度列表/Module5消化去向表/Module6写法规则/Module7重要程度标注），重点对象≥3维度，覆盖 DE 全部数据节点 → 使用 Write 工具写入 [会话目录]/report_plan.md → ls -la 确认文件存在后标记 completed", status: "pending" },
+  { id: "wr3b", content: "【加载：步骤3.5】生成 section_manifest.json + data_slice → 按固定顺序：①划 section 边界（每个二级标题一个 section）→②裁 plan_text（共享模块Module1/2/6全量 + 该 section 专属Module3/4/7内容）→③切 data_slice（按 Module4 JSON 路径从 extracted_data.json 提取，共享数据冗余复制，写入 data_slice_[id].json）→④写 section_manifest.json → ls -la 确认所有 data_slice 文件和 manifest 存在", status: "pending" }
 ])
 
 **执行规则：**
