@@ -144,6 +144,8 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_preprocess.py [template_path] [
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
+**完成后检查**：`ls -la [SESSION_DIR]/format_analysis.md` — 存在且 > 1KB 则通过；否则重调 TA-Format subagent（最多1次）。
+
 #### 步骤3c：调用 TA-Content Subagent
 
 ```
@@ -177,6 +179,8 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_preprocess.py [template_path] [
     ## 回报格式
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
+
+**完成后检查**：`ls -la [SESSION_DIR]/content_analysis.md` — 存在且 > 2KB 则通过；否则重调 TA-Content subagent（最多1次）。
 
 #### 步骤3d：执行组装脚本（确定性，不调用 LLM）
 
@@ -522,6 +526,4 @@ TodoWrite([
 
 ## 强化验证规则
 
-验证规则详见：`${CLAUDE_SKILL_DIR}/guides/validation_rules.md`
-
-各步骤在 TodoWrite content 的【加载】指令中已标注需要重读的章节。执行验证前读取对应章节，执行完成后标记 completed。
+`guides/validation_rules.md` 包含各步骤的完整语义验证规则，供第二期脚本化时参考。第一期执行中不需要主动读取。
