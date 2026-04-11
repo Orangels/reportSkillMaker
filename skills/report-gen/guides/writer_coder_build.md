@@ -10,7 +10,7 @@
 | 文件 | 用途 |
 |------|------|
 | `[session_dir]/section_manifest.json` | 获取所有 section 的 id、title、data_slice 路径，确定 import 顺序 |
-| `[session_dir]/format_config.py` | 读取 PAGE_LAYOUT、FOOTER_TEXT、FOOTER_FONT、FOOTER_SIZE_PT |
+| `[session_dir]/format_config.py` | 读取 PAGE_LAYOUT、FOOTER_FONT、FOOTER_SIZE_PT |
 
 **不读取**：`report_plan.md`、`extracted_data.json`
 
@@ -56,14 +56,12 @@ from docx.oxml import OxmlElement
 
 from format_config import STYLES, PAGE_LAYOUT, FOOTER_FONT, FOOTER_SIZE_PT
 
-# ⚠️ 以下 import 必须按 section_manifest.json 实际 sections 列表生成
-# ⚠️ 禁止保留示例中的 ch1/ch2_traffic，换模板后 section_id 不同，必须逐项替换
-from section_ch1 import write_section as write_ch1
-from section_ch2_traffic import write_section as write_ch2_traffic
+# ⚠️ 以下 import 必须按 section_manifest.json 实际 sections 列表动态生成，有几个 section 写几行
+# ⚠️ 下方仅为格式示例，禁止直接使用，必须全部替换为 manifest 中实际的 section_id
+# 模式：from section_[section_id] import write_section as write_[section_id]
+# from section_ch1 import write_section as write_ch1          ← 示例，换模板后替换
+# from section_ch2_traffic import write_section as write_ch2_traffic  ← 示例，换模板后替换
 # ... 按 manifest 实际 section 列表逐项生成
-
-DATA_DIR = os.path.dirname(__file__)
-
 
 def add_footer(doc):
     """添加页脚（页码居中）"""
@@ -85,7 +83,6 @@ def add_footer(doc):
         instrText.text = " PAGE "
         fldEnd = OxmlElement("w:fldChar")
         fldEnd.set(qn("w:fldCharType"), "end")
-        rPr = run._r.get_or_add_rPr()
         run._r.append(fldBegin)
         run._r.append(instrText)
         run._r.append(fldEnd)
@@ -117,10 +114,11 @@ def main(output_path):
     # 按章节顺序写入内容
     # ⚠️ 每个章节调用必须用 try/except 包裹，捕获后打印具体失败章节再 raise
     # ⚠️ data_slice 路径直接使用 manifest["data_slice"] 绝对路径，禁止用 os.path.join 拼接文件名
+    # ⚠️ 下方仅为格式示例，必须全部替换为 manifest 实际 section_id 和 data_slice 绝对路径
     _calls = [
-        ("ch1",         write_ch1,         "[manifest.sections[0].data_slice 绝对路径]"),
-        ("ch2_traffic", write_ch2_traffic, "[manifest.sections[1].data_slice 绝对路径]"),
-        # ... 按 manifest 实际顺序，data_slice 值直接从 manifest sections[i]["data_slice"] 取
+        # ("ch1",         write_ch1,         "[manifest.sections[0].data_slice 绝对路径]"),
+        # ("ch2_traffic", write_ch2_traffic, "[manifest.sections[1].data_slice 绝对路径]"),
+        # ... 按 manifest 实际顺序，有几个 section 写几行，不遗漏任何条目
     ]
     for _sid, _fn, _slice_path in _calls:
         try:
