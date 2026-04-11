@@ -112,7 +112,7 @@ FOOTER_SIZE_PT = 14
 
 ## python-docx 编码规范
 
-与 writer_coder.md 相同，关键点：
+关键点：
 - XML 属性用原始 twips 值，不用 `Twips()`
 - 页面尺寸用 `Mm()` 设置，边距用 `Pt(twips/20)` 转换
 - 字号用 `Pt()` 设置 Python API，不直接操作 XML sz 属性

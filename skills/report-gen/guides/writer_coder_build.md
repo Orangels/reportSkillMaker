@@ -54,12 +54,13 @@ from docx.shared import Mm, Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from format_config import STYLES, PAGE_LAYOUT, FOOTER_TEXT, FOOTER_FONT, FOOTER_SIZE_PT
+from format_config import STYLES, PAGE_LAYOUT, FOOTER_FONT, FOOTER_SIZE_PT
 
-# 按 manifest 顺序 import 各章节模块
+# ⚠️ 以下 import 必须按 section_manifest.json 实际 sections 列表生成
+# ⚠️ 禁止保留示例中的 ch1/ch2_traffic，换模板后 section_id 不同，必须逐项替换
 from section_ch1 import write_section as write_ch1
 from section_ch2_traffic import write_section as write_ch2_traffic
-# ... 按 manifest 实际 section 列表生成
+# ... 按 manifest 实际 section 列表逐项生成
 
 DATA_DIR = os.path.dirname(__file__)
 
@@ -115,14 +116,15 @@ def main(output_path):
 
     # 按章节顺序写入内容
     # ⚠️ 每个章节调用必须用 try/except 包裹，捕获后打印具体失败章节再 raise
+    # ⚠️ data_slice 路径直接使用 manifest["data_slice"] 绝对路径，禁止用 os.path.join 拼接文件名
     _calls = [
-        ("ch1",         write_ch1,         "data_slice_ch1.json"),
-        ("ch2_traffic", write_ch2_traffic, "data_slice_ch2_traffic.json"),
-        # ... 按 manifest 实际顺序
+        ("ch1",         write_ch1,         "[manifest.sections[0].data_slice 绝对路径]"),
+        ("ch2_traffic", write_ch2_traffic, "[manifest.sections[1].data_slice 绝对路径]"),
+        # ... 按 manifest 实际顺序，data_slice 值直接从 manifest sections[i]["data_slice"] 取
     ]
-    for _sid, _fn, _slice in _calls:
+    for _sid, _fn, _slice_path in _calls:
         try:
-            _fn(doc, os.path.join(DATA_DIR, _slice))
+            _fn(doc, _slice_path)
         except Exception as _e:
             print(f"[ERROR] 章节 {_sid} 生成失败: {type(_e).__name__}: {_e}")
             raise
@@ -143,7 +145,7 @@ if __name__ == "__main__":
 - ❌ 错误：`section.page_width = 11906` — 直接赋 twips 原始值，导致文档全空白
 
 **页脚规范**：
-- 页码居中，格式从 `format_config.py` 的 `FOOTER_TEXT`、`FOOTER_FONT`、`FOOTER_SIZE_PT` 取值
+- 页码居中，字体/大小从 `format_config.py` 的 `FOOTER_FONT`、`FOOTER_SIZE_PT` 取值；"— " 和 " —" 分隔符为固定格式
 - 使用 Word 域代码（`PAGE`），不要硬编码页码数字
 
 **6.4 执行 main.py**
