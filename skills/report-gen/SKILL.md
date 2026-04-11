@@ -293,23 +293,27 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
     - 数据文件：[SESSION_DIR]/extracted_data.json
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：[SESSION_DIR]/report_plan.md
+    - 输出文件1：[SESSION_DIR]/report_plan.md
+    - 输出文件2：[SESSION_DIR]/section_manifest.json
+    - 输出文件3：[SESSION_DIR]/data_slice_[section_id].json × N（按章节数量）
 
     ## 关键提醒（指导文档已有详细说明，此处强调最高优先级约束）
     - report_plan.md 必须填写全部 7 个必填模块，按文档中的输出模板填充
     - 格式速查表禁止'参见 TA'，每个字段必须是具体数值
     - 消化去向表必须覆盖 DE 全部数据节点（含不用+理由）
     - 重点分析对象必须规划 ≥3 个 DE 数据维度
+    - wr3 必须按固定顺序输出全部3个文件：①划 section 边界 → ②裁 plan_text → ③切 data_slice → ④写 section_manifest.json
+    - section_manifest.json 中每个 section 的 plan_text 必须裁剪（共享模块全量+专属内容），禁止整体塞入完整 report_plan.md
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改"
 ```
 
-**完成后检查**：确认 `[SESSION_DIR]/report_plan.md` 已生成且内容非空。
+**完成后检查**：确认 `[SESSION_DIR]/report_plan.md` 已生成且内容非空；确认 `[SESSION_DIR]/section_manifest.json` 已生成。
 
 **⚠️ Planner 调用后，Team Lead 必须验证 plan 质量（见强化验证规则：步骤6a验证），验证通过后才能调用 Coder。**
 
-#### 步骤6b：调用 Writer-Coder Subagent
+#### 步骤6b：调用 Writer-Coder（拆分为 Setup → Sections×N → Build）
 
-**⚠️ 调用 Coder 前，必须先生成时间戳和 scope_label：**
+**⚠️ 调用前，必须先生成时间戳和 scope_label：**
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
@@ -318,33 +322,89 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
 REPORT_TS=$(date +%s)
 # 输出文件路径：[OUTPUT_DIR]/output_[scope_label]报告_${REPORT_TS}.docx
 ```
-将完整的绝对路径（含 scope_label 和时间戳）传递给 Coder 的 `输出文件` 参数。
+
+**⚠️ 必须按以下顺序执行：Setup 完成后才能并行 Sections，所有 Sections 完成后才能 Build。**
+
+##### 步骤6b-1：调用 Writer-Coder-Setup（串行）
 
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
-  prompt: "你是报告编码专家。
+  prompt: "你是格式工具生成专家。
 
     ## 执行指导
-    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder.md
-    严格按照文档中的执行步骤操作，使用 wr4-wr6 TodoWrite 模板。
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder_setup.md
+    严格按照文档中的执行步骤操作，使用 wr4 TodoWrite 模板。
 
     ## 参数
-    - 报告规划文件：[SESSION_DIR]/report_plan.md
-    - 数据文件：[SESSION_DIR]/extracted_data.json
-    - 报告限定条件：[report_scope]
+    - 会话目录：[SESSION_DIR]
+
+    ## 要求
+    - 首先检查 format_utils.py 和 format_config.py 是否都已存在，若存在则直接报告'setup 已完成，跳过'
+    - 只读取 report_plan.md 的 Module1 和 Module2，不读取其他文件
+    - 两个文件都写入成功且语法检查通过才算完成
+    - 以上路径为绝对路径，直接使用，禁止拼接或修改"
+```
+
+**完成后检查**：确认 `[SESSION_DIR]/format_utils.py` 和 `[SESSION_DIR]/format_config.py` 均已生成。
+
+##### 步骤6b-2：读取 section_manifest.json，并行调用 Writer-Coder-Section × N
+
+**先读取 manifest，获取所有 section 条目，然后并行调用（所有 section 无依赖，可同时启动）：**
+
+```python
+# 读取 [SESSION_DIR]/section_manifest.json
+# 对每个 section 条目，构造以下 prompt 并并行调用
+```
+
+对 manifest 中**每个 section**，调用：
+
+```
+使用 Agent 工具（并行）：
+  subagent_type: "general-purpose"
+  prompt: "你是通用章节代码生成专家。
+
+    ## 执行指导
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder_section.md
+    严格按照文档中的执行步骤操作，使用 wr5 TodoWrite 模板。
+
+    ## 参数
+    - section_id：[section.id]
+    - plan_text：[section.plan_text]（直接使用，无需再读文件）
+    - data_slice：[section.data_slice]（绝对路径）
+    - 会话目录：[SESSION_DIR]
+
+    ## 要求
+    - 首先检查 section_[section_id].py 是否已存在，若存在则直接报告'已完成，跳过'
+    - 只读取 data_slice 文件，不读取 report_plan.md 或 extracted_data.json
+    - 生成的文件只定义 write_section(doc, data_slice_path) 函数，不含执行代码
+    - 使用 format_utils.add_paragraph 和 format_config.STYLES，不自行实现字体/行距逻辑
+    - 语法检查通过才算完成
+    - 以上路径为绝对路径，直接使用，禁止拼接或修改"
+```
+
+**完成后检查**：确认每个 `[SESSION_DIR]/section_[section_id].py` 均已生成。
+
+##### 步骤6b-3：调用 Writer-Coder-Build（串行）
+
+```
+使用 Agent 工具：
+  subagent_type: "general-purpose"
+  prompt: "你是报告组装与执行专家。
+
+    ## 执行指导
+    请先阅读执行指导文档：${CLAUDE_SKILL_DIR}/guides/writer_coder_build.md
+    严格按照文档中的执行步骤操作，使用 wr6 TodoWrite 模板。
+
+    ## 参数
     - 会话目录：[SESSION_DIR]
     - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx
 
-    ## 关键提醒（指导文档已有详细说明，此处强调最高优先级约束）
-    - 只读取 report_plan.md 和 extracted_data.json，不读取 analysis_template.md 和 template_content.md
-    - 按 plan 的编码章节清单逐章编码并打钩，防止遗漏
-    - 按 plan 的消化去向表逐维度落实，不遗漏
-    - 重点分析对象必须引用 ≥3 个 DE 数据维度
-    - 段内关键词加粗用多 run + bold=True，禁止 Markdown ** 标记
-    - 必须分文件写入，每文件 ≤150 行，禁止单文件输出所有代码
-    - 编写脚本（wr4+wr5）和执行脚本（wr6）是独立步骤，禁止合并
-    - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改"
+    ## 要求
+    - 首先检查所有 section_*.py 文件是否存在，有缺失则停止并报告，不自动修复
+    - 页面尺寸必须用 Mm() 设置，边距用 Pt(twips/20) 转换，禁止直接赋 twips 原始值
+    - 报告文件存在且大小 > 0 才算完成
+    - 以上路径为绝对路径，直接使用，禁止拼接或修改"
 ```
 
 **完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` 已生成。
@@ -432,7 +492,9 @@ TodoWrite([
   { id: "step4", content: "【加载：步骤4+强化验证规则】数据提取（第一二层）→ 调用 DE subagent 后重读'强化验证规则：步骤4验证'执行验证", status: "pending" },
   { id: "step5", content: "【加载：步骤5+强化验证规则】数据深度提取（第三层+主动发现）→ 调用 DE-deep subagent 后重读'强化验证规则：步骤5验证'执行验证", status: "pending" },
   { id: "step6a", content: "【加载：步骤6a+强化验证规则】Writer-Planner → 调用 Planner subagent 后重读'强化验证规则：步骤6a验证'验证 plan 质量，通过后才能继续", status: "pending" },
-  { id: "step6b", content: "【加载：步骤6b+强化验证规则】Writer-Coder → 先执行 REPORT_TS=$(date +%s) 生成时间戳，构造含时间戳的输出文件绝对路径传给 Coder，调用 subagent 后重读'强化验证规则：步骤6b验证'执行验证", status: "pending" },
+  { id: "step6b_setup", content: "【加载：步骤6b-1+强化验证规则】Writer-Coder-Setup → 先执行 REPORT_TS=$(date +%s) 生成时间戳，调用 setup subagent 生成 format_utils.py + format_config.py，验证两文件存在", status: "pending" },
+  { id: "step6b_sections", content: "【加载：步骤6b-2+强化验证规则】Writer-Coder-Section × N → 读取 section_manifest.json 获取所有 section，并行调用每个 section subagent，验证所有 section_[id].py 存在", status: "pending" },
+  { id: "step6b_build", content: "【加载：步骤6b-3+强化验证规则】Writer-Coder-Build → 调用 build subagent 组装 main.py 并执行，重读'强化验证规则：步骤6b验证'执行验证", status: "pending" },
   { id: "step6c", content: "【加载：步骤6c+强化验证规则】Writer-Verifier → 调用 Verifier subagent 后重读'强化验证规则：步骤6c验证'，读取验证结论决定是否重试", status: "pending" },
   { id: "step7", content: "【加载：步骤7】质量验证 → 重读本文档'步骤7：质量验证'章节", status: "pending" },
   { id: "step8", content: "【加载：步骤8】交付 → 重读本文档'步骤8：交付'章节", status: "pending" }
@@ -515,30 +577,48 @@ TodoWrite([
 6. 验证通过后，用 TodoWrite 将 step5 标记为 completed
 
 ### 步骤6a验证：Writer-Planner 产出检查
-1. 检查文件是否存在：`ls -la [SESSION_DIR]/report_plan.md`
-2. 检查文件大小是否合理（应 > 2KB）
-3. **语义验证**（读取文件，检查 7 个必填模块完整性）：
-   - [ ] 模块1：格式规范速查表存在，每个字段是具体数值（无"参见 TA"引用）
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/report_plan.md [SESSION_DIR]/section_manifest.json`
+2. 检查 report_plan.md 大小是否合理（应 > 2KB）
+3. **report_plan.md 语义验证**（读取文件，检查 7 个必填模块完整性）：
+   - [ ] 模块1：格式规范速查表存在，每个字段是具体数值（无"参见 TA"引用），含对齐列
    - [ ] 模块2：段内加粗规则存在（有具体规则或标注"无"+判断依据）
    - [ ] 模块3：编码章节清单存在，覆盖所有章节，每个分析对象独立一行
-   - [ ] 模块4：章节大纲+维度列表存在，含 DE JSON 路径
+   - [ ] 模块4：章节大纲+维度列表存在，含 DE JSON 路径，与模块3条目严格对齐
    - [ ] 模块5：消化去向汇总表存在，覆盖 DE 全部数据节点（含不用+理由）
    - [ ] 模块6：段落写法规则存在，为句式模板形式（非模板原文照搬）
    - [ ] 模块7：分析对象重要程度标注存在，重点对象规划 ≥3 维度
-4. 如果文件不存在、过小、或语义验证不通过：
-   - 输出错误信息，**指明缺失的具体模块**
+4. **section_manifest.json 验证**（读取文件）：
+   - [ ] 包含 `sections` 数组，条目数 ≥ 1
+   - [ ] 每个 section 含 `id`、`title`、`plan_text`、`data_slice` 字段
+   - [ ] `plan_text` 非空且包含格式速查表内容（非整体塞入完整 report_plan.md）
+   - [ ] `data_slice` 路径对应的 `data_slice_[id].json` 文件存在
+5. 如果文件不存在、过小、或语义验证不通过：
+   - 输出错误信息，**指明缺失的具体模块或字段**
    - 重新调用 Writer-Planner subagent（最多重试1次）
    - 如果重试仍失败，暂停并询问用户
-5. 验证通过后，用 TodoWrite 将 step6a 标记为 completed
+6. 验证通过后，用 TodoWrite 将 step6a 标记为 completed
 
 ### 步骤6b验证：Writer-Coder 产出检查
+
+#### 6b-1（Setup）验证
+1. 检查文件是否存在：`ls -la [SESSION_DIR]/format_utils.py [SESSION_DIR]/format_config.py`
+2. 两个文件均存在才通过；有缺失则重新调用 Setup（最多重试1次）
+3. 通过后用 TodoWrite 将 step6b_setup 标记为 completed
+
+#### 6b-2（Sections）验证
+1. 读取 section_manifest.json，获取所有 section_id
+2. 逐一检查 `[SESSION_DIR]/section_[section_id].py` 是否存在
+3. 全部存在才通过；有缺失则针对缺失的 section 重新调用对应 Section agent（最多重试1次）
+4. 通过后用 TodoWrite 将 step6b_sections 标记为 completed
+
+#### 6b-3（Build）验证
 1. 检查报告文件是否存在：`ls -la [OUTPUT_DIR]/output_[scope_label]报告_*.docx`
 2. 检查文件大小是否合理（应 > 10KB）
 3. 如果文件不存在或过小：
    - 输出错误信息
-   - 重新调用 Writer-Coder subagent（最多重试1次）
+   - 重新调用 Writer-Coder-Build subagent（最多重试1次）
    - 如果重试仍失败，暂停并询问用户
-4. 验证通过后，用 TodoWrite 将 step6b 标记为 completed
+4. 验证通过后，用 TodoWrite 将 step6b_build 标记为 completed
 
 ### 步骤6c验证：Writer-Verifier 产出检查
 1. 检查 data_usage_check.md 是否存在：`ls -la [SESSION_DIR]/data_usage_check.md`

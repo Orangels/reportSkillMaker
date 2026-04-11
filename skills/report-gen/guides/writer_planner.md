@@ -39,9 +39,11 @@
 | extracted_data.json | 全量盘点数据维度，理解数据结构和内容 |
 | template_content.md | 学习段落组织模式、详略比例、句式风格（仿写参考，非内容来源） |
 
-## 唯一输出
+## 输出文件
 
-`[会话目录]/report_plan.md` — 增强版，包含下述 7 个必填模块。
+- `[会话目录]/report_plan.md` — 增强版，包含下述 7 个必填模块
+- `[会话目录]/section_manifest.json` — 调度元数据，供 Team Lead 动态 spawn section agents
+- `[会话目录]/data_slice_[section_id].json × N` — 按 section 切分的数据子集
 
 ## 执行步骤（必须严格遵守）
 
@@ -94,6 +96,50 @@
 
 **3.4 按下方模板填写并保存为 report_plan.md**
 
+**3.5 生成 section_manifest.json + data_slice_ch*.json（新增，必须完成）**
+
+⚠️ 本步骤压力来源是**推理复杂度**，不是 context 长度——输入侧不变，增加的是输出决策量。**必须按以下固定顺序执行，禁止自由发挥：**
+
+**第一步：划定 section 边界**
+- 按二级标题列出所有 section，每个二级标题对应一个 section
+- 整体情况（一级无二级子节）单独作为一个 section
+- 落款/版记单独作为一个 section
+- 工作建议单独作为一个 section
+- 为每个 section 分配唯一 id（如 `ch1`、`ch2_traffic`、`ch3_gambling`）
+
+**第二步：为每个 section 裁剪 plan_text**
+- plan_text = 共享模块（全量）+ 该 section 专属内容（按 section id 裁剪）
+- 共享模块（所有 section 相同）：Module1 全量 + Module2 全量 + Module6 全量
+- 专属内容：Module3 中该 section 对应的行 + Module4 中该 section 的维度列表 + Module7 中该 section 的重要程度行
+- **禁止将完整 report_plan.md 整体塞入 plan_text**，专属内容必须裁剪到只含本 section 相关行
+
+**第三步：为每个 section 切分 data_slice**
+- 根据 Module4 中该 section 标注的 DE JSON 路径，从 extracted_data.json 中提取对应字段
+- **允许跨 section 冗余**：整体环比、总量等多 section 共用的数据，在各相关 slice 中均复制一份
+- 将每个 data_slice 保存为 `[会话目录]/data_slice_[section_id].json`
+
+**第四步：生成 section_manifest.json**
+- 将所有 section 的 id、title、plan_text、data_slice 路径汇总，保存为：
+```json
+{
+  "sections": [
+    {
+      "id": "ch1",
+      "title": "一、整体情况",
+      "plan_text": "（Module1全量 + Module2全量 + Module6全量 + ch1对应的Module3/4/7内容）",
+      "data_slice": "[会话目录]/data_slice_ch1.json"
+    },
+    {
+      "id": "ch2_traffic",
+      "title": "二、（一）交通警情",
+      "plan_text": "...",
+      "data_slice": "[会话目录]/data_slice_ch2_traffic.json"
+    }
+  ]
+}
+```
+- 保存为 `[会话目录]/section_manifest.json`
+
 **内容来源边界（必须遵守）：**
 - **数据驱动的内容**（章节标题、分析结论、建议/措施）：必须由当前数据决定，禁止照搬模板原文
 - **模板保留的内容**（落款、签发信息等模板固有的附属信息）：从 template_content.md 中提取保留，仅更新时间等可变信息
@@ -112,9 +158,9 @@
 
 > Coder 直接使用此表设置格式，不再读 TA 原文。每个字段必须是具体数值，禁止"参见 TA"。
 
-| 内容类型 | 字体 | 字号 | 颜色 | 加粗 | 行距 |
-|---------|------|------|------|------|------|
-| [从 TA 逐项提取] | | | | | |
+| 内容类型 | 字体 | 字号 | 颜色 | 加粗 | 对齐 | 行距(twips) | 首行缩进(twips) |
+|---------|------|------|------|------|------|------------|----------------|
+| [从 TA 逐项提取] | | | | | | | |
 
 ## 模块2：段内加粗规则（必填）
 
@@ -126,6 +172,7 @@
 ## 模块3：编码章节清单（必填）
 
 > Coder 逐章编码并打钩。粒度：一级标题必列、二级标题必列、每个分析对象独立一行、落款/抄送独立一行。
+> **⚠️ 一致性要求：模块3列出的每个二级标题分析对象，必须在模块4中有对应的维度列表条目；模块4出现的每个分析对象，必须在模块3中有对应行。两者须严格对齐，禁止只在一处出现。**
 
 - [ ] [章节/模块名称]（重点/一般，如为重点标注 ≥N维度）
 - [ ] ...
@@ -180,7 +227,7 @@
 TodoWrite([
   { id: "wr1", content: "【加载：步骤1】阅读模板分析文件 → 提取格式规范中字号/颜色/加粗/字体的实际数值，记录段内加粗模式，理解结构框架逻辑", status: "pending" },
   { id: "wr2", content: "【加载：步骤2+关键原则2】盘点数据资产 + 阅读模板正文 → 全量遍历 DE 维度，理解 TA 框架上层逻辑，检查算术自洽性，阅读 template_content.md 学习段落组织模式和详略比例", status: "pending" },
-  { id: "wr3", content: "【加载：步骤3+关键原则2+3】规划报告结构 + 数据消化方案 → 按 report_plan.md 输出模板逐模块填写 7 个必填模块（格式速查表/加粗规则/编码清单/维度列表/消化去向表/写法规则/重要程度标注），标注分析对象重要程度（重点≥3维度），覆盖 DE 全部数据节点，输出到会话目录", status: "pending" }
+  { id: "wr3", content: "【加载：步骤3+关键原则2+3】规划报告结构 + 数据消化方案 → 按 report_plan.md 输出模板逐模块填写 7 个必填模块（格式速查表含对齐列/加粗规则/编码清单/维度列表/消化去向表/写法规则/重要程度标注），标注分析对象重要程度（重点≥3维度），覆盖 DE 全部数据节点，输出到会话目录；然后按固定顺序生成 section_manifest.json + data_slice：①划 section 边界→②裁 plan_text（共享模块全量+专属内容裁剪）→③切 data_slice（按 Module4 JSON 路径，共享数据冗余复制）→④写 section_manifest.json", status: "pending" }
 ])
 
 **执行规则：**
