@@ -35,7 +35,10 @@ skills/report-gen/
     ├── data_expert.md          ← 数据提取专家指导（第一二层）
     ├── data_expert_deep.md     ← 数据深度提取专家指导（第三层+主动发现）
     ├── writer_planner.md       ← Writer-Planner：报告规划专家（wr1-wr3）
-    ├── writer_coder.md         ← Writer-Coder：报告编码专家（wr4-wr6）
+    ├── writer_coder_setup.md   ← Writer-Coder-Setup：格式工具生成（wr4）
+    ├── writer_coder_section.md ← Writer-Coder-Section：通用章节代码生成（wr5）
+    ├── writer_coder_build.md   ← Writer-Coder-Build：报告组装与执行（wr6）
+    ├── writer_coder.md         ← [legacy] 旧版单体 Coder（已拆分，仅供参考）
     ├── writer_verifier.md      ← Writer-Verifier：报告验证专家（wr7-wr8）
     ├── template_analyst_legacy.md ← 旧版单体 TA 指导（备用）
     └── scripts/ta/             ← TA 确定性脚本

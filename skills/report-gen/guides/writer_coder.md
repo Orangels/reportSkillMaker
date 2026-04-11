@@ -1,4 +1,9 @@
-# Writer-Coder 指导文档
+# Writer-Coder 指导文档（Legacy）
+
+> **⚠️ 此文件已被拆分为三个独立指导文档，仅供历史参考，请勿在新流程中使用：**
+> - `writer_coder_setup.md` — 格式工具生成（wr4）
+> - `writer_coder_section.md` — 通用章节代码生成（wr5）
+> - `writer_coder_build.md` — 报告组装与执行（wr6）
 
 ## 角色定位
 报告编码专家，负责根据 report_plan.md 和 extracted_data.json 编写 Python 脚本生成 DOCX 报告。

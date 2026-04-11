@@ -114,9 +114,18 @@ def main(output_path):
     set_page_layout(doc)
 
     # 按章节顺序写入内容
-    write_ch1(doc, os.path.join(DATA_DIR, "data_slice_ch1.json"))
-    write_ch2_traffic(doc, os.path.join(DATA_DIR, "data_slice_ch2_traffic.json"))
-    # ... 按 manifest 实际顺序
+    # ⚠️ 每个章节调用必须用 try/except 包裹，捕获后打印具体失败章节再 raise
+    _calls = [
+        ("ch1",         write_ch1,         "data_slice_ch1.json"),
+        ("ch2_traffic", write_ch2_traffic, "data_slice_ch2_traffic.json"),
+        # ... 按 manifest 实际顺序
+    ]
+    for _sid, _fn, _slice in _calls:
+        try:
+            _fn(doc, os.path.join(DATA_DIR, _slice))
+        except Exception as _e:
+            print(f"[ERROR] 章节 {_sid} 生成失败: {type(_e).__name__}: {_e}")
+            raise
 
     add_footer(doc)
     doc.save(output_path)
@@ -150,7 +159,7 @@ python [session_dir]/main.py [output_path]
 1. 确认报告文件已生成（文件存在且大小 > 0）
 2. 如果执行报错：
    - 先读取完整错误信息
-   - 定位是哪个 section 模块报错（Python 会在 traceback 中指明）
+   - 查找 `[ERROR] 章节 xxx 生成失败:` 前缀行，精确定位失败章节（main.py 已用 try/except 包裹每个章节调用）
    - 检查该 section 的 import 路径和函数签名
    - 修复后重新执行（直接执行 main.py，不需要重写整个文件）
 3. 报告最终输出文件路径
