@@ -38,9 +38,7 @@ skills/report-gen/
     ├── writer_coder_setup.md   ← Writer-Coder-Setup：格式工具生成（wr4）
     ├── writer_coder_section.md ← Writer-Coder-Section：通用章节代码生成（wr5）
     ├── writer_coder_build.md   ← Writer-Coder-Build：报告组装与执行（wr6）
-    ├── writer_coder.md         ← [legacy] 旧版单体 Coder（已拆分，仅供参考）
     ├── writer_verifier.md      ← Writer-Verifier：报告验证专家（wr7-wr8）
-    ├── template_analyst_legacy.md ← 旧版单体 TA 指导（备用）
     └── scripts/ta/             ← TA 确定性脚本
         ├── ta_preprocess.py    ← 预处理：DOCX→JSON+纯文本
         └── ta_assemble.py      ← 组装：format+content→analysis_template.md
