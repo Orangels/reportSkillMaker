@@ -505,8 +505,8 @@ REPORT_TS=$(date +%s)
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
-| 报告只有总量描述 | Planner 消化去向表不完整，或 Coder 未按 plan 落实 | 重调 Planner（附加要求：消化去向表必须覆盖所有 DE 节点）；若 Planner 产出无变化则改为重调 Coder |
-| 格式与模板不一致 | Planner 格式速查表数值错误，或 Coder 未按速查表编码 | 重调 Coder（附加要求：严格按格式速查表编码）；若 Coder 产出无改善则改为重调 Planner |
+| 报告只有总量描述 | Planner 消化去向表不完整，或 Coder 未按 plan 落实 | 重调 Planner（附加要求：消化去向表必须覆盖所有 DE 节点）；若重调后 Verifier 仍报告相同缺陷，则改为重调 Coder |
+| 格式与模板不一致 | Planner 格式速查表数值错误，或 Coder 未按速查表编码 | 重调 Coder（附加要求：严格按格式速查表编码）；若重调后 Verifier 仍报告格式缺陷，则改为重调 Planner |
 | 文档100+页空白 | python-docx 单位混用（EMU vs twips） | 检查 Writer-Coder 指导文档的编码规范 |
 | 文字被截断 | 大字号段落设置了固定行距 | 检查 Writer-Coder 指导文档的行距裁切规则 |
 
