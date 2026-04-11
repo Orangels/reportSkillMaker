@@ -480,14 +480,7 @@ REPORT_TS=$(date +%s)
 
 ### 步骤8：交付
 
-告知用户：
-- 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx`
-- 中间文件目录：`[SESSION_DIR]/`
-- 模板分析文件：`[SESSION_DIR]/analysis_template.md`
-- 模板正文参考：`[SESSION_DIR]/template_content.md`
-- 数据文件：`[SESSION_DIR]/extracted_data.json`
-- 报告规划文件：`[SESSION_DIR]/report_plan.md`
-- 数据验证报告：`[SESSION_DIR]/data_usage_check.md`
+告知用户最终报告文件名：`output_[scope_label]报告_[REPORT_TS].docx`
 
 **`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
 - 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
