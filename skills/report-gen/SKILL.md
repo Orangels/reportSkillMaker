@@ -315,7 +315,7 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/ta/ta_assemble.py [SESSION_DIR]
     - 格式速查表禁止'参见 TA'，每个字段必须是具体数值
     - 消化去向表必须覆盖 DE 全部数据节点（含不用+理由）
     - 重点分析对象必须规划 ≥3 个 DE 数据维度
-    - wr3 必须按固定顺序输出全部3个文件：①划 section 边界 → ②裁 plan_text → ③切 data_slice → ④写 section_manifest.json
+    - wr3b 必须按固定顺序执行：①划 section 边界 → ②裁 plan_text → ③切 data_slice → ④写 section_manifest.json
     - section_manifest.json 中每个 section 的 plan_text 必须裁剪（共享模块全量+专属内容），禁止整体塞入完整 report_plan.md
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
     ## 回报格式
