@@ -467,16 +467,16 @@ REPORT_TS=$(date +%s)
     - 输出验证结论：通过/不通过 + 具体缺陷列表
     - 以上所有路径均为绝对路径，直接使用，禁止拼接或修改
     ## 回报格式
-    完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
+    完成后只报告：①完成状态（成功/失败）②验证结论（通过/不通过，不通过时列出具体缺陷条目）③产出文件的绝对路径 ④如有执行错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
 **完成后检查**：`ls -la [SESSION_DIR]/data_usage_check.md` — 存在且 > 1KB 则通过；否则重调 Verifier subagent（最多1次）。
 
 ### 步骤7：质量验证
 
-读取 `[SESSION_DIR]/data_usage_check.md`（Verifier 产出），汇总验证结论：
+根据 Verifier subagent 回报中的验证结论判断：
 - **通过**：继续步骤8
-- **不通过**：读取具体缺陷列表，根据严重程度决定是否重调 Writer-Coder（最多1次）；重调后须再次调用 Verifier
+- **不通过**：根据回报中的具体缺陷条目，决定是否重调 Writer-Coder（最多1次）；重调后须再次调用 Verifier
 
 ### 步骤8：交付
 
@@ -505,8 +505,8 @@ REPORT_TS=$(date +%s)
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
-| 报告只有总量描述 | Planner 消化去向表不完整，或 Coder 未按 plan 落实 | 先检查 report_plan.md 消化去向表：完整则重调 Coder；不完整则重调 Planner |
-| 格式与模板不一致 | Planner 格式速查表数值错误，或 Coder 未按速查表编码 | 先检查 report_plan.md 格式速查表：正确则重调 Coder；错误则重调 Planner |
+| 报告只有总量描述 | Planner 消化去向表不完整，或 Coder 未按 plan 落实 | 重调 Planner（附加要求：消化去向表必须覆盖所有 DE 节点）；若 Planner 产出无变化则改为重调 Coder |
+| 格式与模板不一致 | Planner 格式速查表数值错误，或 Coder 未按速查表编码 | 重调 Coder（附加要求：严格按格式速查表编码）；若 Coder 产出无改善则改为重调 Planner |
 | 文档100+页空白 | python-docx 单位混用（EMU vs twips） | 检查 Writer-Coder 指导文档的编码规范 |
 | 文字被截断 | 大字号段落设置了固定行距 | 检查 Writer-Coder 指导文档的行距裁切规则 |
 
