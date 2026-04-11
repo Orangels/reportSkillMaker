@@ -127,6 +127,7 @@
    - 确认新增数据与已有第一二层数据无重复字段
    - 确认无数值矛盾（如新旧辖区分布数字不一致）
 4. 输出验证报告
+5. **禁止将验证报告（清单对照表、冲突检查结论等）写入 `extracted_data.json`**；验证结果只输出到响应文本
 
 ### 步骤6：保存数据
 
@@ -149,7 +150,7 @@ TodoWrite([
   { id: "dd2", content: "【加载：步骤2】探查数据源 → 为每个特殊项确定具体筛选条件（必须执行代码）", status: "pending" },
   { id: "dd3", content: "【加载：步骤3】第三层提取 → 逐项编写 Python 脚本筛选和统计，参照 TA 清单的分析维度模板（空壳不算完成）", status: "pending" },
   { id: "dd4", content: "【加载：步骤4】主动发现 → 逐列扫描脚本 + 提取结构化数据（含文本字段结构化提取，禁止未经加工的纯文字描述）", status: "pending" },
-  { id: "dd5", content: "【加载：步骤5】验证 → 空壳检查 + 冲突检查 + 验证报告", status: "pending" },
+  { id: "dd5", content: "【加载：步骤5】验证 → 空壳检查 + 冲突检查 + 验证报告；验证结果禁止写入 extracted_data.json，只输出到响应文本", status: "pending" },
   { id: "dd6", content: "【加载：步骤6】保存 extracted_data.json 到会话目录", status: "pending" }
 ])
 
