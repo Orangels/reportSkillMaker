@@ -377,19 +377,23 @@ REPORT_TS=$(date +%s)
 
 **完成后检查**：确认 `[SESSION_DIR]/format_utils.py` 和 `[SESSION_DIR]/format_config.py` 均已生成。
 
-##### 步骤6b-2：读取 section_manifest.json，并行调用 Writer-Coder-Section × N
+##### 步骤6b-2：分批并行调用 Writer-Coder-Section × N
 
-**先读取 manifest，获取所有 section 条目，然后并行调用（所有 section 无依赖，可同时启动）：**
+**采用循环分批策略，每批最多4个 section，以 section_[id].py 文件是否存在作为完成状态判断：**
 
-```python
-# 读取 [SESSION_DIR]/section_manifest.json
-# 对每个 section 条目，构造以下 prompt 并并行调用
+**每轮执行逻辑：**
+1. 读取 `[SESSION_DIR]/section_manifest.json`，获取完整 sections 列表
+2. 执行 `ls [SESSION_DIR]/section_*.py` 检查已生成的文件
+3. 从 sections 列表中筛选出**还没有对应 .py 文件**的 section，取前4个
+4. 对这4个 section **并行**调用 Agent（见下方 prompt 模板）
+5. 等待本批4个 Agent 全部完成
+6. 回到步骤1，重复执行
+7. 若步骤3筛出的待处理列表为空，退出循环，进入步骤6b-3
+
+**每批中对每个 section 调用：**
+
 ```
-
-对 manifest 中**每个 section**，调用：
-
-```
-使用 Agent 工具（并行）：
+使用 Agent 工具（批内并行）：
   subagent_type: "general-purpose"
   prompt: "你是通用章节代码生成专家。
 
@@ -414,7 +418,7 @@ REPORT_TS=$(date +%s)
     完成后只报告：①完成状态（成功/失败）②产出文件的绝对路径 ③如有错误：一句话描述原因。禁止输出文件内容或详细执行日志。"
 ```
 
-**完成后检查**：确认每个 `[SESSION_DIR]/section_[section_id].py` 均已生成。
+**循环结束条件检查**：执行 `ls [SESSION_DIR]/section_*.py` 确认文件数量等于 manifest 中 sections 总数，全部存在则进入步骤6b-3。
 
 ##### 步骤6b-3：调用 Writer-Coder-Build（串行）
 
@@ -516,7 +520,7 @@ TodoWrite([
   { id: "step5", content: "【步骤5】数据深度提取（第三层+主动发现）→ 调用 DE-deep subagent，ls -la 验证 extracted_data.json > 20KB", status: "pending" },
   { id: "step6a", content: "【步骤6a】Writer-Planner → 调用 Planner subagent，ls -la 验证 report_plan.md > 2KB + section_manifest.json > 1KB + data_slice 文件存在，通过后才能继续", status: "pending" },
   { id: "step6b_setup", content: "【步骤6b-1】Writer-Coder-Setup → 先执行 REPORT_TS=$(date +%s) 生成时间戳，调用 setup subagent 生成 format_utils.py + format_config.py，验证两文件存在", status: "pending" },
-  { id: "step6b_sections", content: "【步骤6b-2】Writer-Coder-Section × N → 读取 section_manifest.json 获取所有 section，并行调用每个 section subagent，验证所有 section_[id].py 存在", status: "pending" },
+  { id: "step6b_sections", content: "【步骤6b-2】Writer-Coder-Section × N → 循环分批执行：每轮 ls [SESSION_DIR]/section_*.py 检查已有文件，取前4个无对应 .py 的 section 并行调用，等本批完成后继续下一轮，直到所有 section_*.py 存在", status: "pending" },
   { id: "step6b_build", content: "【步骤6b-3】Writer-Coder-Build → 调用 build subagent 组装 main.py 并执行，ls -la 验证输出 docx > 50KB", status: "pending" },
   { id: "step6c", content: "【步骤6c】Writer-Verifier → 调用 Verifier subagent，ls -la 验证 data_usage_check.md > 1KB", status: "pending" },
   { id: "step7", content: "【加载：步骤7】质量验证 → 重读本文档'步骤7：质量验证'章节", status: "pending" },
