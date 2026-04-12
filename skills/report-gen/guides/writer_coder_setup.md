@@ -75,7 +75,7 @@ def set_first_line_indent(paragraph, twips_value):
 实现要求：
 - `add_paragraph` 内部处理字体（中英文分开设置 `rFonts`）、字号（`Pt()`）、颜色（`RGBColor`）、加粗、对齐、行距、首行缩进
 - 行距和首行缩进操作 XML 时**必须使用原始 twips 整数值**，禁止用 `Twips()` 返回值
-- 字号用 `Pt(size_pt)` 设置 `run.font.size`
+- 字号用 `Pt(size_pt)` 设置 `run.font.size`；`size_pt` 参数单位为 **pt**，report_plan.md Module1 中的字号值已由 Planner 转换为 pt，直接传入即可，**禁止再除以 2**
 - 颜色用 `RGBColor.from_string(color_hex)` 设置
 - 字体中英文分开：`run.font.name = font_name` 同时设置 `rPr.rFonts` 的 `w:eastAsia`
 
