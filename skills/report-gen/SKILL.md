@@ -388,7 +388,7 @@ python3 ${CLAUDE_SKILL_DIR}/guides/scripts/coder/check_sections.py [SESSION_DIR]
 ```
 2. 判断脚本输出：
    - 输出 `ALL_DONE` → 退出循环，进入步骤6b-3
-   - 输出 `REMAINING=N, NEXT_BATCH=['id1', ...]` → 解析 NEXT_BATCH 列表，对其中每个 section **并行**调用 Agent（见下方 prompt 模板）
+   - 输出 `REMAINING=N, NEXT_BATCH=["id1", ...]` → 解析 NEXT_BATCH JSON 数组，对其中每个 section **并行**调用 Agent（见下方 prompt 模板）
 3. 等待本批 Agent 全部完成
 4. 回到步骤1，重复执行
 
