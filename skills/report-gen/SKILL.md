@@ -47,6 +47,8 @@ skills/report-gen/
 
 ## 执行步骤
 
+**当前工作目录**：!`pwd`
+
 ### 步骤1：参数收集
 
 收集以下参数（优先从命令行参数解析，缺失则询问用户）：
@@ -66,9 +68,13 @@ skills/report-gen/
 ### 步骤2：初始化会话目录
 
 ```bash
-SESSION_DIR="./middle_file/$(date +%s%3N)_session"
+PROJECT_ROOT="$(pwd)"
+SESSION_DIR="$PROJECT_ROOT/middle_file/$(date +%s%3N)_session"
+OUTPUT_DIR="$PROJECT_ROOT/output"
 mkdir -p "$SESSION_DIR"
-mkdir -p "./output"
+mkdir -p "$OUTPUT_DIR"
+echo "PROJECT_ROOT=$PROJECT_ROOT"
+echo "SESSION_DIR=$SESSION_DIR"
 ```
 
 记录 `SESSION_DIR` 路径，后续传递给各 subagent。
@@ -134,6 +140,18 @@ mkdir -p "./output"
 
 ### 步骤5：调用 Writer Subagent
 
+**⚠️ 调用前，必须先生成时间戳和 scope_label：**
+
+**`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
+- 空格替换为 `_`，去除特殊字符
+- 示例：`2025年8月` → `2025年8月`，`2025年8月 XX部门` → `2025年8月_XX部门`
+- 主 Agent 构造好 `scope_label` 后，代入下方 prompt 的 `[scope_label]` 占位符
+
+```bash
+REPORT_TS=$(date +%s)
+# 输出文件路径：[OUTPUT_DIR]/output_[scope_label]报告_${REPORT_TS}.docx
+```
+
 ```
 使用 Agent 工具：
   subagent_type: "general-purpose"
@@ -152,7 +170,7 @@ mkdir -p "./output"
     - 原始模板：[template_path]
     - 报告限定条件：[report_scope]
     - 会话目录：[SESSION_DIR]
-    - 输出文件：./output/output_[scope_label]统计报告.docx
+    - 输出文件：[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx
 
     ## 要求
     - 优先使用 Skill 工具调用 docx skill 生成文档，skill 无法满足的操作再用 python-docx
@@ -162,7 +180,7 @@ mkdir -p "./output"
     - 智能仿写，禁止简单占位符替换"
 ```
 
-**完成后检查**：确认 `output/output_[scope_label]统计报告.docx` 已生成。
+**完成后检查**：确认 `[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx` 已生成。
 
 ### 步骤6：质量验证
 
@@ -174,13 +192,10 @@ mkdir -p "./output"
 ### 步骤7：交付
 
 告知用户：
-- 最终报告路径：`./output/output_[scope_label]统计报告.docx`
+- 最终报告路径：`[OUTPUT_DIR]/output_[scope_label]报告_[REPORT_TS].docx`
 - 中间文件目录：`[SESSION_DIR]/`
 - 模板分析文件：`[SESSION_DIR]/analysis_template.md`
 - 数据文件：`[SESSION_DIR]/extracted_data.json`
-
-**`scope_label` 生成规则**：从 `report_scope` 中提取关键词拼接为简短标签，用于文件命名。
-- 示例：`2025年8月` → `2025年8月`，`2025年8月 临高县公安局` → `2025年8月_临高县公安局`
 
 ## 核心原则
 
